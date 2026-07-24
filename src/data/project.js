@@ -254,16 +254,16 @@ export const AMENITIES = [
 ];
 
 export const INFRASTRUCTURE = [
-  "Metro Line 12",
-  "Metro Line 5",
-  "Metro Line 14",
-  "Airoli Katai Freeway",
-  "Bullet Train Connectivity",
-  "Mumbai Nagpur Expressway",
-  "Delhi Mumbai Expressway",
-  "Kalyan Ring Road",
-  "Multi Modal Corridor",
-  "Mothagaon Bridge",
+  { label: "Metro Line 12", icon: "TrainFront" },
+  { label: "Metro Line 5", icon: "TrainFront" },
+  { label: "Metro Line 14", icon: "TrainFront" },
+  { label: "Airoli Katai Freeway", icon: "Route" },
+  { label: "Bullet Train Connectivity", icon: "Rocket" },
+  { label: "Mumbai Nagpur Expressway", icon: "Route" },
+  { label: "Delhi Mumbai Expressway", icon: "Route" },
+  { label: "Kalyan Ring Road", icon: "CircleDot" },
+  { label: "Multi Modal Corridor", icon: "Waypoints" },
+  { label: "Mothagaon Bridge", icon: "Landmark" },
 ];
 
 export const CONNECTIVITY = [
