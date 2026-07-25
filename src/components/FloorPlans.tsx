@@ -6,6 +6,7 @@ import Container from "@/components/ui/Container";
 import SectionHeading from "@/components/ui/SectionHeading";
 import Button from "@/components/ui/Button";
 import GoldFrame from "@/components/ui/GoldFrame";
+import Reveal from "@/components/ui/Reveal";
 import { FLOOR_PLAN_TABS, PRICING } from "@/data/project";
 
 export default function FloorPlans() {
@@ -38,7 +39,8 @@ export default function FloorPlans() {
           ))}
         </div>
 
-        <GoldFrame muted className="w-full max-w-4xl">
+        <Reveal delay={100} className="w-full max-w-4xl" key={active}>
+        <GoldFrame muted>
           <div className="grid grid-cols-1 items-center gap-8 rounded-[15px] bg-navy-950/[0.02] p-6 sm:p-10 lg:grid-cols-2">
           <div className="relative flex aspect-4/3 w-full items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-navy-900 to-navy-950">
             <div className="pointer-events-none absolute inset-0 bg-stars opacity-40" />
@@ -54,7 +56,8 @@ export default function FloorPlans() {
               {units.map((unit, idx) => (
                 <li
                   key={idx}
-                  className="flex items-center justify-between rounded-xl bg-white px-4 py-3 text-sm shadow-sm"
+                  className="flex animate-fade-in items-center justify-between rounded-xl bg-white px-4 py-3 text-sm shadow-sm"
+                  style={{ animationDelay: `${idx * 60}ms` }}
                 >
                   <span className="text-navy-700/80">
                     {unit.carpet} sq.ft Carpet · {unit.saleable} sq.ft Saleable
@@ -63,12 +66,13 @@ export default function FloorPlans() {
                 </li>
               ))}
             </ul>
-            <Button href="#lead-form" variant="primary" size="lg" icon={Download} className="w-fit">
+            <Button href="#contact-form" variant="primary" size="lg" icon={Download} className="w-fit">
               Download Floor Plan
             </Button>
           </div>
           </div>
         </GoldFrame>
+        </Reveal>
       </Container>
     </section>
   );

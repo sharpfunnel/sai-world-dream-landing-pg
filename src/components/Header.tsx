@@ -43,7 +43,7 @@ export default function Header() {
             <Phone className="h-4 w-4" strokeWidth={2} />
             {CONTACT.phoneDisplay}
           </a>
-          <Button href="#lead-form" size="md" variant="primary">
+          <Button href="#contact-form" size="md" variant="primary">
             Book Site Visit
           </Button>
         </div>

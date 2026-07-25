@@ -3,9 +3,11 @@ import Container from "@/components/ui/Container";
 import SectionHeading from "@/components/ui/SectionHeading";
 import Button from "@/components/ui/Button";
 import GoldFrame from "@/components/ui/GoldFrame";
+import IconBadge from "@/components/ui/IconBadge";
+import Reveal from "@/components/ui/Reveal";
 import { FLOOR_PLAN_TABS, FLOOR_WISE_COST_SHEET, PRICING } from "@/data/project";
 
-function rangeText(min, max, suffix) {
+function rangeText(min: number, max: number, suffix: string) {
   return min === max ? `${min} ${suffix}` : `${min} – ${max} ${suffix}`;
 }
 
@@ -33,51 +35,72 @@ export default function Pricing() {
           description="Transparent carpet & saleable areas across 1, 2, 2.5 and 3 BHK homes. Prices are indicative — request the latest price sheet for current availability."
         />
 
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {PRICING_GROUPS.map((group) => (
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {PRICING_GROUPS.map((group, idx) => (
+            <Reveal key={group.config} delay={idx * 90} className="h-full">
             <GoldFrame
-              key={group.config}
-              className="transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-navy-950/10"
+              className="group relative h-full overflow-hidden transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl hover:shadow-gold-900/15"
             >
-              <div className="flex h-full flex-col gap-4 rounded-[15px] p-6">
-                <div className="flex items-center justify-between">
-                  <span className="text-2xl font-bold text-navy-950">{group.config}</span>
-                  <span className="text-gold-foil text-xs font-bold uppercase tracking-[0.15em]">
-                    Premium
-                  </span>
+              <div
+                className="pointer-events-none absolute -right-12 -top-12 h-36 w-36 rounded-full bg-gold-400/10 opacity-0 blur-2xl transition-opacity duration-300 group-hover:opacity-100"
+                aria-hidden="true"
+              />
+
+              <div className="relative flex h-full flex-col gap-5 rounded-[15px] p-6 sm:p-7">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex flex-col gap-1.5">
+                    <span className="text-gold-foil text-[11px] font-bold uppercase tracking-[0.2em]">
+                      Premium
+                    </span>
+                    <span className="font-display text-2xl font-bold text-navy-950">{group.config}</span>
+                  </div>
+                  <IconBadge icon="Home" />
                 </div>
 
-                <div className="flex flex-col gap-1 text-sm text-navy-700/75">
-                  <div className="flex items-center gap-2">
+                <div className="rule-gold" />
+
+                <div className="flex flex-col gap-2 text-sm text-navy-700/75">
+                  <div className="flex items-center gap-2.5">
                     <Ruler className="h-4 w-4 shrink-0 text-gold-600" />
                     <span>{group.carpetRange}</span>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2.5">
                     <Ruler className="h-4 w-4 shrink-0 text-gold-600" />
                     <span>{group.saleableRange}</span>
                   </div>
                 </div>
 
-                <div className="rule-gold" />
-
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-navy-700/60">Starting From</p>
-                  <p className="text-2xl font-bold text-navy-950">
-                    {group.priceStart}
+                <div className="mt-auto flex flex-col gap-4">
+                  <div className="rounded-lg bg-navy-950/[0.03] px-4 py-3.5">
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-navy-700/55">
+                      Starting From
+                    </p>
+                    <p className="mt-0.5 font-display text-2xl font-bold whitespace-nowrap text-navy-950">
+                      {group.priceStart}
+                    </p>
                     {group.priceEnd !== group.priceStart && (
-                      <span className="text-lg font-semibold text-navy-700/60"> to {group.priceEnd}</span>
+                      <p className="text-sm font-medium whitespace-nowrap text-navy-700/55">
+                        up to {group.priceEnd}
+                      </p>
                     )}
-                  </p>
-                </div>
+                  </div>
 
-                <Button href="#lead-form" variant="ghost" size="md" className="mt-1 w-full">
-                  Enquire Now
-                </Button>
+                  <Button
+                    href="#contact-form"
+                    variant="ghost"
+                    size="md"
+                    className="w-full border-gold-400/40 hover:border-gold-400 hover:bg-gold-400/10"
+                  >
+                    Enquire Now
+                  </Button>
+                </div>
               </div>
             </GoldFrame>
+            </Reveal>
           ))}
         </div>
 
+        <Reveal>
         <GoldFrame className="shadow-sm">
           <div className="flex flex-col gap-5 rounded-[15px] p-6 sm:p-8">
             <div className="flex flex-col gap-1">
@@ -128,9 +151,10 @@ export default function Pricing() {
             </ul>
           </div>
         </GoldFrame>
+        </Reveal>
 
         <div className="flex justify-center">
-          <Button href="#lead-form" variant="dark" size="lg" icon={FileText}>
+          <Button href="#contact-form" variant="dark" size="lg" icon={FileText}>
             Get Latest Price Sheet
           </Button>
         </div>

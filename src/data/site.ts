@@ -14,7 +14,7 @@ export const SITE = {
   address: "Kalyan Shil Road, Dombivli, Maharashtra",
 };
 
-export function whatsappLink(message) {
+export function whatsappLink(message?: string) {
   const text = encodeURIComponent(message || SITE.whatsappDefaultMessage);
   return `https://wa.me/${SITE.whatsappNumber}?text=${text}`;
 }

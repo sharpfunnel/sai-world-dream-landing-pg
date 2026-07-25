@@ -2,6 +2,7 @@ import { GraduationCap, HeartPulse, MapPin } from "lucide-react";
 import Container from "@/components/ui/Container";
 import SectionHeading from "@/components/ui/SectionHeading";
 import Button from "@/components/ui/Button";
+import Reveal from "@/components/ui/Reveal";
 import { CONNECTIVITY, HOSPITALS, SCHOOLS, SITE } from "@/data/project";
 
 export default function LocationAdvantages() {
@@ -17,7 +18,10 @@ export default function LocationAdvantages() {
         />
 
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_1fr]">
-          <div className="overflow-hidden rounded-2xl border border-navy-950/10 shadow-sm">
+          <Reveal
+            variant="left"
+            className="overflow-hidden rounded-2xl border border-navy-950/10 shadow-sm"
+          >
             <iframe
               title="Sai World Dreams location map"
               src={`https://www.google.com/maps?q=${mapQuery}&output=embed`}
@@ -25,10 +29,10 @@ export default function LocationAdvantages() {
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
             />
-          </div>
+          </Reveal>
 
           <div className="flex flex-col gap-6">
-            <div className="rounded-2xl border border-navy-950/8 bg-white p-6 shadow-sm">
+            <Reveal variant="right" className="rounded-2xl border border-navy-950/8 bg-white p-6 shadow-sm">
               <h3 className="mb-4 flex items-center gap-2 font-display text-lg font-semibold text-navy-950">
                 <MapPin className="h-5 w-5 text-gold-600" /> Connectivity
               </h3>
@@ -42,10 +46,10 @@ export default function LocationAdvantages() {
                   </li>
                 ))}
               </ul>
-            </div>
+            </Reveal>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="rounded-2xl border border-navy-950/8 bg-white p-6 shadow-sm">
+              <Reveal variant="right" delay={80} className="rounded-2xl border border-navy-950/8 bg-white p-6 shadow-sm">
                 <h3 className="mb-3 flex items-center gap-2 font-display text-base font-semibold text-navy-950">
                   <GraduationCap className="h-5 w-5 text-gold-600" /> Schools
                 </h3>
@@ -57,8 +61,8 @@ export default function LocationAdvantages() {
                     </li>
                   ))}
                 </ul>
-              </div>
-              <div className="rounded-2xl border border-navy-950/8 bg-white p-6 shadow-sm">
+              </Reveal>
+              <Reveal variant="right" delay={160} className="rounded-2xl border border-navy-950/8 bg-white p-6 shadow-sm">
                 <h3 className="mb-3 flex items-center gap-2 font-display text-base font-semibold text-navy-950">
                   <HeartPulse className="h-5 w-5 text-gold-600" /> Hospitals
                 </h3>
@@ -70,13 +74,13 @@ export default function LocationAdvantages() {
                     </li>
                   ))}
                 </ul>
-              </div>
+              </Reveal>
             </div>
           </div>
         </div>
 
         <div className="flex justify-center">
-          <Button href="#lead-form" variant="dark" size="lg">
+          <Button href="#contact-form" variant="dark" size="lg">
             Schedule Site Visit
           </Button>
         </div>

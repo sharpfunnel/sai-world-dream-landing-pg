@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import Container from "@/components/ui/Container";
 import SectionHeading from "@/components/ui/SectionHeading";
+import Reveal from "@/components/ui/Reveal";
 import { FAQS } from "@/data/project";
 
 export default function FAQ() {
@@ -18,9 +19,11 @@ export default function FAQ() {
           {FAQS.map((item, idx) => {
             const isOpen = openIdx === idx;
             return (
-              <div
+              <Reveal
+                as="div"
                 key={item.q}
-                className="overflow-hidden rounded-2xl border border-navy-950/8 bg-navy-950/[0.02]"
+                delay={Math.min(idx * 40, 320)}
+                className="overflow-hidden rounded-2xl border border-navy-950/8 bg-navy-950/[0.02] transition-colors duration-300"
               >
                 <button
                   type="button"
@@ -30,17 +33,23 @@ export default function FAQ() {
                 >
                   <span className="text-sm font-semibold text-navy-950 sm:text-base">{item.q}</span>
                   <ChevronDown
-                    className={`h-5 w-5 shrink-0 text-gold-600 transition-transform ${
+                    className={`h-5 w-5 shrink-0 text-gold-600 transition-transform duration-300 ${
                       isOpen ? "rotate-180" : ""
                     }`}
                   />
                 </button>
-                {isOpen && (
-                  <div className="px-5 pb-4 text-sm leading-relaxed text-navy-700/80 sm:px-6">
-                    {item.a}
+                <div
+                  className={`grid transition-[grid-template-rows] duration-300 ease-out ${
+                    isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+                  }`}
+                >
+                  <div className="overflow-hidden">
+                    <div className="px-5 pb-4 text-sm leading-relaxed text-navy-700/80 sm:px-6">
+                      {item.a}
+                    </div>
                   </div>
-                )}
-              </div>
+                </div>
+              </Reveal>
             );
           })}
         </div>

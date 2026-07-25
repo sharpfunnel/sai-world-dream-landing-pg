@@ -1,6 +1,7 @@
 import { CheckCircle2, Clock, Circle } from "lucide-react";
 import Container from "@/components/ui/Container";
 import SectionHeading from "@/components/ui/SectionHeading";
+import Reveal from "@/components/ui/Reveal";
 import { CONSTRUCTION_STATUS } from "@/data/project";
 
 const STATUS_STYLES = {
@@ -9,9 +10,9 @@ const STATUS_STYLES = {
   Upcoming: { icon: Circle, className: "text-navy-700/50 bg-navy-950/5" },
 };
 
-function statusStyle(status) {
+function statusStyle(status: string) {
   return (
-    STATUS_STYLES[status] || {
+    STATUS_STYLES[status as keyof typeof STATUS_STYLES] || {
       icon: Circle,
       className: "text-navy-700/50 bg-navy-950/5",
     }
@@ -32,8 +33,10 @@ export default function ConstructionStatus() {
           {CONSTRUCTION_STATUS.map((item, idx) => {
             const { icon: StatusIcon, className } = statusStyle(item.status);
             return (
-              <div
+              <Reveal
                 key={item.phase}
+                variant="left"
+                delay={idx * 70}
                 className="flex items-center gap-4 rounded-xl border border-navy-950/8 bg-white p-4 shadow-sm sm:p-5"
               >
                 <span className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${className}`}>
@@ -43,7 +46,7 @@ export default function ConstructionStatus() {
                   <span className="text-sm font-semibold text-navy-950">{item.phase}</span>
                   <span className="text-sm text-navy-700/70">{item.status}</span>
                 </div>
-              </div>
+              </Reveal>
             );
           })}
         </div>

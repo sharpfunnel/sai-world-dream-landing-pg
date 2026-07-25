@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ComponentType, ReactNode } from "react";
 
 const VARIANTS = {
   primary: "bg-gold-400 text-navy-950 hover:bg-gold-500 shadow-md shadow-gold-900/10",
@@ -20,6 +21,14 @@ export default function Button({
   icon: IconEl,
   className = "",
   ...props
+}: {
+  href?: string;
+  children: ReactNode;
+  variant?: keyof typeof VARIANTS;
+  size?: keyof typeof SIZES;
+  icon?: ComponentType<{ className?: string; strokeWidth?: number }>;
+  className?: string;
+  [key: string]: any;
 }) {
   const classes = `inline-flex items-center justify-center gap-2 rounded-md font-semibold transition-colors duration-200 ${VARIANTS[variant]} ${SIZES[size]} ${className}`;
 

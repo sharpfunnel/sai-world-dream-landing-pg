@@ -5,7 +5,17 @@ const SIZES = {
   lg: { wrap: "h-12 w-12", icon: "h-6 w-6" },
 };
 
-export default function IconBadge({ icon, size = "md", tone = "light", className = "" }) {
+export default function IconBadge({
+  icon,
+  size = "md",
+  tone = "light",
+  className = "",
+}: {
+  icon: string;
+  size?: keyof typeof SIZES;
+  tone?: "light" | "dark";
+  className?: string;
+}) {
   const s = SIZES[size] || SIZES.md;
   const colors =
     tone === "dark" ? "bg-gold-400/15 text-gold-300" : "bg-gold-400/12 text-gold-600";

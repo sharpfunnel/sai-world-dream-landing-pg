@@ -1,6 +1,7 @@
 import { Landmark } from "lucide-react";
 import Container from "@/components/ui/Container";
 import SectionHeading from "@/components/ui/SectionHeading";
+import Reveal from "@/components/ui/Reveal";
 import { CONSULTANTS, DEVELOPER } from "@/data/project";
 
 export default function AboutDeveloper() {
@@ -14,16 +15,18 @@ export default function AboutDeveloper() {
         />
 
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-          {DEVELOPER.stats.map((stat) => (
-            <div
+          {DEVELOPER.stats.map((stat, idx) => (
+            <Reveal
               key={stat.label}
-              className="flex flex-col items-center gap-1 rounded-2xl border border-navy-950/8 bg-white p-6 text-center shadow-sm"
+              variant="scale"
+              delay={idx * 80}
+              className="flex flex-col items-center gap-1 rounded-2xl border border-navy-950/8 bg-white p-6 text-center shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md"
             >
               <span className="font-display text-3xl font-semibold text-navy-950">{stat.value}</span>
               <span className="text-xs font-medium uppercase tracking-wide text-navy-700/60">
                 {stat.label}
               </span>
-            </div>
+            </Reveal>
           ))}
         </div>
 
@@ -32,25 +35,32 @@ export default function AboutDeveloper() {
             Present Across
           </p>
           <div className="flex flex-wrap justify-center gap-2">
-            {DEVELOPER.presence.map((city) => (
-              <span
+            {DEVELOPER.presence.map((city, idx) => (
+              <Reveal
+                as="span"
                 key={city}
+                variant="fade"
+                delay={idx * 40}
                 className="rounded-full border border-navy-950/10 bg-white px-4 py-1.5 text-sm font-medium text-navy-800"
               >
                 {city}
-              </span>
+              </Reveal>
             ))}
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
-          {CONSULTANTS.map((c) => (
-            <div key={c.role} className="flex flex-col gap-1 rounded-xl border border-navy-950/8 bg-white p-4">
+          {CONSULTANTS.map((c, idx) => (
+            <Reveal
+              key={c.role}
+              delay={idx * 50}
+              className="flex flex-col gap-1 rounded-xl border border-navy-950/8 bg-white p-4"
+            >
               <span className="text-[11px] font-semibold uppercase tracking-wide text-gold-700">
                 {c.role}
               </span>
               <span className="text-sm font-medium text-navy-900">{c.name}</span>
-            </div>
+            </Reveal>
           ))}
         </div>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { ChangeEvent, FormEvent, useState } from "react";
 import { CheckCircle2, Send } from "lucide-react";
 import { CONFIG_OPTIONS } from "@/data/project";
 import { buildEnquiryWhatsAppLink } from "@/lib/utils";
@@ -11,6 +11,12 @@ export default function LeadForm({
   title = "Get Callback in 30 Minutes",
   subtitle = "Share your details and our team will reach out shortly.",
   showExtras = false,
+}: {
+  id?: string;
+  variant?: "card" | "light";
+  title?: string;
+  subtitle?: string;
+  showExtras?: boolean;
 }) {
   const [submitted, setSubmitted] = useState(false);
   const [values, setValues] = useState({
@@ -22,12 +28,12 @@ export default function LeadForm({
     message: "",
   });
 
-  const handleChange = (e) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setValues((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const link = buildEnquiryWhatsAppLink(values);
     setSubmitted(true);
@@ -43,7 +49,7 @@ export default function LeadForm({
     return (
       <div
         id={id}
-        className={`flex flex-col items-center justify-center gap-3 rounded-md p-8 text-center ${
+        className={`flex animate-scale-in flex-col items-center justify-center gap-3 rounded-md p-8 text-center ${
           isDark ? "bg-white/10 border border-white/15" : "bg-navy-950/5 border border-navy-950/10"
         }`}
       >

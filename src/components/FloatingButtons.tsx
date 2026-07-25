@@ -22,13 +22,13 @@ export default function FloatingButtons() {
           <a
             href="#top"
             aria-label="Back to top"
-            className="flex h-12 w-12 items-center justify-center rounded-full bg-navy-950 text-white shadow-lg shadow-navy-950/25 transition-transform hover:scale-105"
+            className="flex h-12 w-12 animate-pop-in items-center justify-center rounded-full bg-navy-950 text-white shadow-lg shadow-navy-950/25 transition-transform hover:scale-105"
           >
             <ArrowUp className="h-5 w-5" />
           </a>
         )}
         <a
-          href="#lead-form"
+          href="#contact-form"
           aria-label="Enquire now"
           className="flex h-12 w-12 items-center justify-center rounded-full bg-gold-400 text-navy-950 shadow-lg shadow-gold-400/30 transition-transform hover:scale-105"
         >
@@ -71,7 +71,7 @@ export default function FloatingButtons() {
           <span className="text-xs font-medium">WhatsApp</span>
         </a>
         <a
-          href="#lead-form"
+          href="#contact-form"
           className="flex flex-col items-center justify-center gap-1 bg-gold-400 py-3 text-navy-950 active:bg-gold-300"
         >
           <Send className="h-5 w-5" />

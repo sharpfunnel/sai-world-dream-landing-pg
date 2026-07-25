@@ -1,4 +1,6 @@
+import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
+import { ReactNode } from "react";
 import "./globals.css";
 import { SITE } from "@/data/project";
 
@@ -8,7 +10,7 @@ const plusJakarta = Plus_Jakarta_Sans({
   weight: ["400", "500", "600", "700", "800"],
 });
 
-export const metadata = {
+export const metadata: Metadata = {
   metadataBase: new URL(SITE.url),
   title: SITE.seoTitle,
   description: SITE.metaDescription,
@@ -27,13 +29,13 @@ export const metadata = {
   },
 };
 
-export const viewport = {
+export const viewport: Viewport = {
   themeColor: "#0a1730",
   width: "device-width",
   initialScale: 1,
 };
 
-export default function RootLayout({ children }) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={`${plusJakarta.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col bg-white text-navy-950">

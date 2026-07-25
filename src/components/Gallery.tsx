@@ -4,13 +4,14 @@ import { useState } from "react";
 import { Expand, X } from "lucide-react";
 import Container from "@/components/ui/Container";
 import SectionHeading from "@/components/ui/SectionHeading";
+import Reveal from "@/components/ui/Reveal";
 import { GALLERY_CATEGORIES } from "@/data/project";
 import { unsplashUrl } from "@/lib/utils";
 
 const HEIGHTS = ["h-52", "h-64", "h-44", "h-72", "h-56", "h-60"];
 
 export default function Gallery() {
-  const [active, setActive] = useState(null);
+  const [active, setActive] = useState<(typeof GALLERY_CATEGORIES)[number] | null>(null);
 
   return (
     <section id="gallery" className="bg-white py-20 sm:py-28">
@@ -23,9 +24,11 @@ export default function Gallery() {
 
         <div className="columns-2 gap-4 sm:columns-3 lg:columns-4 [column-fill:_balance]">
           {GALLERY_CATEGORIES.map((item, idx) => (
-            <button
+            <Reveal
+              as="button"
               key={item.label}
               type="button"
+              delay={Math.min(idx * 60, 360)}
               onClick={() => setActive(item)}
               className={`group relative mb-4 flex w-full ${HEIGHTS[idx % HEIGHTS.length]} break-inside-avoid items-end overflow-hidden rounded-xl border border-navy-950/8 text-left transition-transform hover:-translate-y-1`}
             >
@@ -41,7 +44,7 @@ export default function Gallery() {
               <span className="absolute top-3 right-3 z-10 inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/15 text-white opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100">
                 <Expand className="h-4 w-4" />
               </span>
-            </button>
+            </Reveal>
           ))}
         </div>
 
@@ -52,11 +55,11 @@ export default function Gallery() {
 
       {active && (
         <div
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-navy-950/90 p-4 backdrop-blur-sm sm:p-6"
+          className="fixed inset-0 z-[60] flex animate-fade-in items-center justify-center bg-navy-950/90 p-4 backdrop-blur-sm sm:p-6"
           onClick={() => setActive(null)}
         >
           <div
-            className="relative w-full max-w-3xl overflow-hidden rounded-2xl"
+            className="relative w-full max-w-3xl animate-scale-in overflow-hidden rounded-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
