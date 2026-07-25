@@ -15,6 +15,7 @@ export default function LeadFormPreview({
   return (
     <a
       href={target}
+      data-cta="hero-lead-preview"
       aria-label={`${title} — go to enquiry form`}
       className="group relative flex cursor-pointer flex-col gap-4 rounded-md border border-white/15 bg-white/10 p-6 backdrop-blur-md transition-transform duration-300 hover:-translate-y-1 sm:p-7"
     >

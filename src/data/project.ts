@@ -405,7 +405,7 @@ export const FAQS = [
   },
   {
     q: "What is possession?",
-    a: "Phase 1 possession is scheduled for December 2026, and Phase 2 possession is scheduled for December 2027.",
+    a: "Phase 1 possession is scheduled for December 2026, and Phase 2 possession is scheduled for December 2027. As per MahaRERA registration, the RERA-registered completion date is December 2028 for Phase 1 and December 2029 for Phase 2.",
   },
   {
     q: "Is parking available?",

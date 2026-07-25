@@ -11,7 +11,7 @@ export default function Amenities() {
       <Container className="flex flex-col gap-14">
         <SectionHeading
           eyebrow="Amenities"
-          title="40+ Lifestyle Amenities, Zero Compromises"
+          title="61+ Lifestyle Amenities, Zero Compromises"
           description="From fitness and leisure to entertainment and an exclusive clubhouse — every amenity is designed around how modern families actually live."
           light
         />

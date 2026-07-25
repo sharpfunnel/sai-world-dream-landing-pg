@@ -1,0 +1,242 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------------------
+// Phase 1: core first-party analytics — visitor, session, page view capture.
+// Later phases (events, scroll, mouse/heatmap, CTA, forms, perf, errors,
+// leads, Meta Ads sync, funnels, session replay) add models incrementally.
+// ---------------------------------------------------------------------------
+
+model Visitor {
+  id               String    @id @default(cuid())
+  fingerprint      String    @unique
+  firstSeenAt      DateTime  @default(now())
+  lastSeenAt       DateTime  @updatedAt
+  isReturning      Boolean   @default(false)
+  userId           String?
+  country          String?
+  region           String?
+  city             String?
+  timezone         String?
+  language         String?
+  browser          String?
+  browserVersion   String?
+  os               String?
+  deviceType       String?
+  screenWidth      Int?
+  screenHeight     Int?
+  sessions         Session[]
+  leads            Lead[]
+
+  @@index([firstSeenAt])
+}
+
+model Session {
+  id            String     @id @default(cuid())
+  clientId      String     @unique
+  visitor       Visitor    @relation(fields: [visitorId], references: [id])
+  visitorId     String
+  startedAt     DateTime   @default(now())
+  endedAt       DateTime?
+  totalDuration Int?
+  isBounce      Boolean    @default(true)
+  pagesViewed   Int        @default(0)
+  entryPath     String?
+  exitPath      String?
+  referrer      String?
+  utmSource     String?
+  utmMedium     String?
+  utmCampaign   String?
+  utmContent    String?
+  utmTerm       String?
+  gclid         String?
+  fbclid        String?
+  msclkid       String?
+  viewportWidth Int?
+  viewportHeight Int?
+  pageViews     PageView[]
+  events        Event[]
+  scrollEvents  ScrollEvent[]
+  ctaEvents     CtaEvent[]
+  formEvents    FormEvent[]
+  perfMetrics   PerformanceMetric[]
+  errors        ErrorEvent[]
+  leads         Lead[]
+  mouseEvents   MouseEvent[]
+  heatmapEvents HeatmapEvent[]
+
+  @@index([visitorId])
+  @@index([startedAt])
+  @@index([utmSource, utmMedium, utmCampaign])
+}
+
+model PageView {
+  id         String    @id @default(cuid())
+  session    Session   @relation(fields: [sessionId], references: [id])
+  sessionId  String
+  path       String
+  title      String?
+  enteredAt  DateTime  @default(now())
+  exitedAt   DateTime?
+  timeOnPage Int?
+
+  @@index([sessionId])
+  @@index([path])
+}
+
+// ---------------------------------------------------------------------------
+// Phase 2: engagement — generic events, scroll depth, CTA, form, performance,
+// and error tracking. All scoped to a Session.
+// ---------------------------------------------------------------------------
+
+model Event {
+  id        String   @id @default(cuid())
+  session   Session  @relation(fields: [sessionId], references: [id])
+  sessionId String
+  name      String
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  @@index([sessionId])
+  @@index([name])
+}
+
+model ScrollEvent {
+  id          String   @id @default(cuid())
+  session     Session  @relation(fields: [sessionId], references: [id])
+  sessionId   String
+  path        String
+  depth       Int
+  timeToReach Int?
+  createdAt   DateTime @default(now())
+
+  @@index([sessionId])
+  @@index([path, depth])
+}
+
+model CtaEvent {
+  id              String   @id @default(cuid())
+  session         Session  @relation(fields: [sessionId], references: [id])
+  sessionId       String
+  ctaId           String
+  action          String
+  timeBeforeClick Int?
+  createdAt       DateTime @default(now())
+
+  @@index([sessionId])
+  @@index([ctaId, action])
+}
+
+model FormEvent {
+  id        String   @id @default(cuid())
+  session   Session  @relation(fields: [sessionId], references: [id])
+  sessionId String
+  formId    String
+  action    String
+  fieldName String?
+  errorMessage String?
+  createdAt DateTime @default(now())
+
+  @@index([sessionId])
+  @@index([formId, action])
+}
+
+model PerformanceMetric {
+  id        String   @id @default(cuid())
+  session   Session  @relation(fields: [sessionId], references: [id])
+  sessionId String
+  path      String
+  metric    String
+  value     Float
+  rating    String?
+  createdAt DateTime @default(now())
+
+  @@index([sessionId])
+  @@index([path, metric])
+}
+
+model ErrorEvent {
+  id        String   @id @default(cuid())
+  session   Session  @relation(fields: [sessionId], references: [id])
+  sessionId String
+  type      String
+  message   String
+  stack     String?
+  path      String?
+  createdAt DateTime @default(now())
+
+  @@index([sessionId])
+  @@index([type, createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// Phase 4: lead capture — persisted server-side at form submission time,
+// independent of the WhatsApp deep link the form also opens.
+// ---------------------------------------------------------------------------
+
+model Lead {
+  id        String   @id @default(cuid())
+  visitor   Visitor  @relation(fields: [visitorId], references: [id])
+  visitorId String
+  session   Session  @relation(fields: [sessionId], references: [id])
+  sessionId String
+  formId    String
+  name      String?
+  phone     String?
+  email     String?
+  config    String?
+  budget    String?
+  message   String?
+  source    String?
+  status    String   @default("new")
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([status])
+}
+
+// ---------------------------------------------------------------------------
+// Phase 3: mouse behavior + heatmaps. Raw high-frequency mouse *movement* is
+// deliberately not captured here — that belongs to Phase 8's rrweb-based
+// session replay, which does full-fidelity capture properly instead of a
+// hand-rolled sampler. This phase captures bounded, high-signal events only.
+// ---------------------------------------------------------------------------
+
+model MouseEvent {
+  id             String   @id @default(cuid())
+  session        Session  @relation(fields: [sessionId], references: [id])
+  sessionId      String
+  path           String
+  type           String
+  x              Int
+  y              Int
+  targetSelector String?
+  hoverDuration  Int?
+  createdAt      DateTime @default(now())
+
+  @@index([sessionId])
+  @@index([path, type])
+}
+
+model HeatmapEvent {
+  id            String   @id @default(cuid())
+  session       Session  @relation(fields: [sessionId], references: [id])
+  sessionId     String
+  path          String
+  type          String
+  xPct          Float
+  yPct          Float
+  viewportWidth Int?
+  createdAt     DateTime @default(now())
+
+  @@index([path, type])
+}

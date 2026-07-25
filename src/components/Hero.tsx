@@ -63,10 +63,10 @@ export default function Hero() {
           </div>
 
           <Reveal as="div" delay={420} className="flex flex-wrap items-center gap-3 pt-2">
-            <Button href="#contact-form" variant="primary" size="lg">
+            <Button href="#contact-form" variant="primary" size="lg" data-cta="hero-book-site-visit">
               Book Free Site Visit
             </Button>
-            <Button href="#pricing" variant="outline" size="lg" icon={Download}>
+            <Button href="#pricing" variant="outline" size="lg" icon={Download} data-cta="hero-download-brochure">
               Download Brochure
             </Button>
           </Reveal>
@@ -74,12 +74,14 @@ export default function Hero() {
           <Reveal as="div" delay={480} className="flex flex-wrap items-center gap-5 pt-1">
             <a
               href={CONTACT.phoneHref}
+              data-cta="hero-call"
               className="inline-flex items-center gap-2 text-sm font-semibold text-white transition-colors hover:text-gold-300"
             >
               <Phone className="h-4 w-4" /> {CONTACT.phoneDisplay}
             </a>
             <a
               href={CONTACT.whatsappHref}
+              data-cta="hero-whatsapp"
               className="inline-flex items-center gap-2 text-sm font-semibold text-white transition-colors hover:text-gold-300"
             >
               <MessageCircle className="h-4 w-4" /> WhatsApp Now

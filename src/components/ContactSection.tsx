@@ -22,6 +22,7 @@ export default function ContactSection() {
               as="a"
               variant="left"
               href={CONTACT.phoneHref}
+              data-cta="contact-call"
               className="flex items-center gap-3 rounded-xl border border-navy-950/8 bg-white p-4 shadow-sm transition-colors hover:border-gold-300/50"
             >
               <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-gold-400/15 text-gold-700">
@@ -37,6 +38,7 @@ export default function ContactSection() {
               variant="left"
               delay={70}
               href={`mailto:${CONTACT.email}`}
+              data-cta="contact-email"
               className="flex items-center gap-3 rounded-xl border border-navy-950/8 bg-white p-4 shadow-sm transition-colors hover:border-gold-300/50"
             >
               <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-gold-400/15 text-gold-700">

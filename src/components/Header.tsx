@@ -38,12 +38,13 @@ export default function Header() {
         <div className="hidden lg:flex items-center gap-3">
           <a
             href={CONTACT.phoneHref}
+            data-cta="header-call"
             className="inline-flex items-center gap-2 text-sm font-semibold text-navy-950/85 hover:text-gold-600 transition-colors"
           >
             <Phone className="h-4 w-4" strokeWidth={2} />
             {CONTACT.phoneDisplay}
           </a>
-          <Button href="#contact-form" size="md" variant="primary">
+          <Button href="#contact-form" size="md" variant="primary" data-cta="header-book-site-visit">
             Book Site Visit
           </Button>
         </div>
@@ -62,10 +63,10 @@ export default function Header() {
         <div className="lg:hidden border-t border-navy-950/10 bg-white">
           <Container className="flex flex-col gap-1 py-4">
             <div className="mt-2 flex gap-3 px-3">
-              <Button href={CONTACT.phoneHref} icon={Phone} variant="ghost" className="flex-1">
+              <Button href={CONTACT.phoneHref} icon={Phone} variant="ghost" className="flex-1" data-cta="header-mobile-call">
                 Call Now
               </Button>
-              <Button href={CONTACT.whatsappHref} icon={MessageCircle} variant="primary" className="flex-1">
+              <Button href={CONTACT.whatsappHref} icon={MessageCircle} variant="primary" className="flex-1" data-cta="header-mobile-whatsapp">
                 WhatsApp
               </Button>
             </div>

@@ -90,6 +90,7 @@ export default function Pricing() {
                     variant="ghost"
                     size="md"
                     className="w-full border-gold-400/40 hover:border-gold-400 hover:bg-gold-400/10"
+                    data-cta={`pricing-enquire-${group.config.toLowerCase().replace(/\s+/g, "-")}`}
                   >
                     Enquire Now
                   </Button>
@@ -154,7 +155,7 @@ export default function Pricing() {
         </Reveal>
 
         <div className="flex justify-center">
-          <Button href="#contact-form" variant="dark" size="lg" icon={FileText}>
+          <Button href="#contact-form" variant="dark" size="lg" icon={FileText} data-cta="pricing-get-price-sheet">
             Get Latest Price Sheet
           </Button>
         </div>

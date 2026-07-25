@@ -1,9 +1,10 @@
 "use client";
 
-import { ChangeEvent, FormEvent, useState } from "react";
+import { ChangeEvent, FormEvent, FocusEvent, InvalidEvent, useEffect, useRef, useState } from "react";
 import { CheckCircle2, Send } from "lucide-react";
 import { CONFIG_OPTIONS } from "@/data/project";
 import { buildEnquiryWhatsAppLink } from "@/lib/utils";
+import { submitLead, trackFormEvent } from "@/lib/tracking/client";
 
 export default function LeadForm({
   id = "lead-form",
@@ -28,16 +29,81 @@ export default function LeadForm({
     message: "",
   });
 
+  const formRef = useRef<HTMLFormElement>(null);
+  const startedRef = useRef(false);
+  const submittedRef = useRef(false);
+  const abandonSentRef = useRef(false);
+
+  useEffect(() => {
+    const node = formRef.current;
+    if (!node || !("IntersectionObserver" in window)) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          trackFormEvent(id, "viewed");
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.3 }
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    const flagAbandoned = () => {
+      if (startedRef.current && !submittedRef.current && !abandonSentRef.current) {
+        abandonSentRef.current = true;
+        trackFormEvent(id, "abandoned");
+      }
+    };
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "hidden") flagAbandoned();
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    window.addEventListener("pagehide", flagAbandoned);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      window.removeEventListener("pagehide", flagAbandoned);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setValues((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleFocus = (e: FocusEvent<HTMLFormElement>) => {
+    const target = e.target as unknown as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
+    if (!target.name) return;
+    if (!startedRef.current) {
+      startedRef.current = true;
+      trackFormEvent(id, "started");
+    }
+    trackFormEvent(id, "field_focus", target.name);
+  };
+
+  const handleBlur = (e: FocusEvent<HTMLFormElement>) => {
+    const target = e.target as unknown as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
+    if (target.name && target.value.trim()) {
+      trackFormEvent(id, "field_complete", target.name);
+    }
+  };
+
+  const handleInvalid = (e: InvalidEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    trackFormEvent(id, "validation_error", e.currentTarget.name, e.currentTarget.validationMessage);
+  };
+
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const link = buildEnquiryWhatsAppLink(values);
+    submittedRef.current = true;
+    trackFormEvent(id, "submitted");
     setSubmitted(true);
     window.open(link, "_blank", "noopener,noreferrer");
+    submitLead(id, values).catch(() => {});
   };
 
   const isDark = variant === "card";
@@ -76,7 +142,10 @@ export default function LeadForm({
   return (
     <form
       id={id}
+      ref={formRef}
       onSubmit={handleSubmit}
+      onFocus={handleFocus}
+      onBlur={handleBlur}
       className={`flex flex-col gap-4 rounded-md p-6 sm:p-7 ${
         isDark
           ? "bg-white/10 border border-white/15 backdrop-blur-md"
@@ -97,6 +166,7 @@ export default function LeadForm({
         placeholder="Full Name*"
         value={values.name}
         onChange={handleChange}
+        onInvalid={handleInvalid}
         className={inputClass}
       />
       <input
@@ -107,6 +177,7 @@ export default function LeadForm({
         placeholder="Mobile Number*"
         value={values.phone}
         onChange={handleChange}
+        onInvalid={handleInvalid}
         className={inputClass}
       />
       <input
@@ -115,6 +186,7 @@ export default function LeadForm({
         placeholder="Email (optional)"
         value={values.email}
         onChange={handleChange}
+        onInvalid={handleInvalid}
         className={inputClass}
       />
       <select
@@ -122,6 +194,7 @@ export default function LeadForm({
         required
         value={values.config}
         onChange={handleChange}
+        onInvalid={handleInvalid}
         className={inputClass}
       >
         <option value="" disabled>

@@ -52,7 +52,8 @@ export default function Footer() {
             pricing, floor plans, specifications, and amenities shown on this page are indicative
             and subject to change without prior notice. Images are for representational purposes
             only. Please contact us for the latest availability, pricing, and project details.
-            MahaRERA Registration No.: {SITE.reraNumber}. Refer to the official{" "}
+            MahaRERA Registration No.: {SITE.reraNumber}. RERA-registered completion date:
+            Phase 1 – Dec 2028, Phase 2 – Dec 2029. Refer to the official{" "}
             <a href={SITE.reraUrl} className="underline hover:text-gold-300" target="_blank" rel="noopener noreferrer">
               MahaRERA website
             </a>{" "}

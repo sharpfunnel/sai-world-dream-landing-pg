@@ -4,6 +4,7 @@ import { ReactNode } from "react";
 import { GoogleTagManager } from "@next/third-parties/google";
 import "./globals.css";
 import { SITE } from "@/data/project";
+import { Analytics } from "@/components/Analytics";
 
 const GTM_ID = "GTM-W7MFGWFW";
 
@@ -51,6 +52,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             style={{ display: "none", visibility: "hidden" }}
           />
         </noscript>
+        <Analytics />
         {children}
       </body>
     </html>

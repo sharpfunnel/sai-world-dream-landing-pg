@@ -30,6 +30,7 @@ export default function FloatingButtons() {
         <a
           href="#contact-form"
           aria-label="Enquire now"
+          data-cta="float-enquire"
           className="flex h-12 w-12 items-center justify-center rounded-full bg-gold-400 text-navy-950 shadow-lg shadow-gold-400/30 transition-transform hover:scale-105"
         >
           <Send className="h-5 w-5" />
@@ -39,6 +40,7 @@ export default function FloatingButtons() {
           target="_blank"
           rel="noopener noreferrer"
           aria-label="WhatsApp us"
+          data-cta="float-whatsapp"
           className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500 text-white shadow-lg shadow-emerald-500/30 transition-transform hover:scale-105"
         >
           <MessageCircle className="h-5 w-5" />
@@ -46,6 +48,7 @@ export default function FloatingButtons() {
         <a
           href={CONTACT.phoneHref}
           aria-label="Call us"
+          data-cta="float-call"
           className="flex h-12 w-12 items-center justify-center rounded-full bg-navy-800 text-white shadow-lg shadow-navy-950/25 transition-transform hover:scale-105"
         >
           <Phone className="h-5 w-5" />
@@ -56,6 +59,7 @@ export default function FloatingButtons() {
       <div className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-3 border-t border-white/10 bg-navy-950 pb-[env(safe-area-inset-bottom)] lg:hidden">
         <a
           href={CONTACT.phoneHref}
+          data-cta="mobile-bar-call"
           className="flex flex-col items-center justify-center gap-1 py-3 text-white active:bg-white/10"
         >
           <Phone className="h-5 w-5" />
@@ -65,6 +69,7 @@ export default function FloatingButtons() {
           href={CONTACT.whatsappHref}
           target="_blank"
           rel="noopener noreferrer"
+          data-cta="mobile-bar-whatsapp"
           className="flex flex-col items-center justify-center gap-1 border-x border-white/10 bg-emerald-600 py-3 text-white active:bg-emerald-700"
         >
           <MessageCircle className="h-5 w-5" />
@@ -72,6 +77,7 @@ export default function FloatingButtons() {
         </a>
         <a
           href="#contact-form"
+          data-cta="mobile-bar-enquire"
           className="flex flex-col items-center justify-center gap-1 bg-gold-400 py-3 text-navy-950 active:bg-gold-300"
         >
           <Send className="h-5 w-5" />
