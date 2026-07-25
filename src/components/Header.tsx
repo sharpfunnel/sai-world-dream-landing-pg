@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Phone, MessageCircle, Menu, X } from "lucide-react";
 import Container from "@/components/ui/Container";
 import Button from "@/components/ui/Button";
-import { CONTACT, SITE } from "@/data/project";
+import { CONTACT, SITE, DEVELOPER } from "@/data/project";
 
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
@@ -26,12 +26,17 @@ export default function Header() {
       }`}
     >
       <Container className="flex items-center justify-between py-3.5">
-        <a href="#top" className="flex items-baseline gap-2">
-          <span className="font-display text-xl sm:text-2xl font-semibold text-navy-950">
-            Sai World Dreams
+        <a href="#top" className="flex flex-col">
+          <span className="flex items-baseline gap-2">
+            <span className="font-display text-xl sm:text-2xl font-semibold text-navy-950">
+              Sai World Dreams
+            </span>
+            <span className="hidden sm:inline text-xs uppercase tracking-[0.2em] text-gold-600">
+              {SITE.location}
+            </span>
           </span>
-          <span className="hidden sm:inline text-xs uppercase tracking-[0.2em] text-gold-600">
-            {SITE.location}
+          <span className="text-[10px] sm:text-xs font-medium uppercase tracking-wide text-navy-950/45">
+            by {DEVELOPER.brand} &middot; {SITE.brandLine}
           </span>
         </a>
 

@@ -1,16 +1,13 @@
 // Central content source for the Sai World Dreams landing page.
 // Sourced from official Paradise Group brochure, leaflet & cost sheet (W.E.F. 13/10/2025).
-// TODO: CONTACT.whatsappHref still uses a placeholder mobile number — none of the source
-// documents list a WhatsApp/mobile number, only the corporate landlines below. Replace it
-// with the real sales mobile number before going live.
 
 export const CONTACT = {
-  phoneDisplay: "022 2783 1000",
-  phoneHref: "tel:+912227831000",
-  phoneAltDisplay: "022 2783 9000",
-  phoneAltHref: "tel:+912227839000",
+  phoneDisplay: "84510 47710",
+  phoneHref: "tel:+918451047710",
+  phoneAltDisplay: "84510 47710",
+  phoneAltHref: "tel:+918451047710",
   whatsappHref:
-    "https://wa.me/919876543210?text=Hi%2C%20I%27m%20interested%20in%20Sai%20World%20Dreams%2C%20Dombivli.%20Please%20share%20more%20details.",
+    "https://wa.me/918451047710?text=Hi%2C%20I%27m%20interested%20in%20Sai%20World%20Dreams%2C%20Dombivli.%20Please%20share%20more%20details.",
   email: "saiworlddreams@paradisegroup.co.in",
   salesEmail: "sales@paradisegroup.co.in",
   enquiryEmail: "enquiry@paradisegroup.co.in",
@@ -18,6 +15,7 @@ export const CONTACT = {
 
 export const SITE = {
   projectName: "Sai World Dreams",
+  brandLine: "Paradise Sai World Dream",
   tagline: "Live the Dream",
   location: "Dombivli",
   url: "https://saiworlddreams.example.com",

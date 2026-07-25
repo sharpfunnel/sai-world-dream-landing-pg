@@ -7,6 +7,9 @@ export default function Footer() {
         <div className="grid grid-cols-1 gap-10 border-b border-white/10 pb-10 sm:grid-cols-2 lg:grid-cols-4">
           <div className="flex flex-col gap-3">
             <span className="font-display text-xl font-semibold text-white">{SITE.projectName}</span>
+            <span className="text-xs font-semibold uppercase tracking-[0.16em] text-gold-300/80">
+              {SITE.brandLine}
+            </span>
             <p className="text-sm leading-relaxed text-white/60">
               An 18-acre integrated global lifestyle township in {SITE.location}, offering luxury
               1, 2, 2.5 &amp; 3 BHK homes. A development by {DEVELOPER.fullName}.
@@ -16,7 +19,6 @@ export default function Footer() {
           <div className="flex flex-col gap-3">
             <span className="text-sm font-semibold uppercase tracking-wide text-gold-300">Contact</span>
             <a href={CONTACT.phoneHref} className="text-sm hover:text-gold-300">{CONTACT.phoneDisplay}</a>
-            <a href={CONTACT.phoneAltHref} className="text-sm hover:text-gold-300">{CONTACT.phoneAltDisplay}</a>
             <a href={`mailto:${CONTACT.email}`} className="text-sm hover:text-gold-300">{CONTACT.email}</a>
             <p className="text-sm text-white/60">{SITE.siteAddress}</p>
           </div>
@@ -41,7 +43,7 @@ export default function Footer() {
           <p className="text-xs leading-relaxed text-white/50">
             <span className="font-semibold text-white/70">{DEVELOPER.fullName}</span> —{" "}
             {DEVELOPER.legalEntity}. Corporate Office: {DEVELOPER.corporateOffice}. Tel:{" "}
-            {CONTACT.phoneDisplay}, {CONTACT.phoneAltDisplay}. Email: {CONTACT.enquiryEmail}
+            {CONTACT.phoneDisplay}. Email: {CONTACT.enquiryEmail}
             {" · "}
             <a href={DEVELOPER.website} className="hover:text-gold-300" target="_blank" rel="noopener noreferrer">
               {DEVELOPER.website.replace("https://", "")}

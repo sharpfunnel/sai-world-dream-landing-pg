@@ -5,7 +5,7 @@ import Icon from "@/components/Icon";
 import LeadFormPreview from "@/components/LeadFormPreview";
 import GoldFrame from "@/components/ui/GoldFrame";
 import Reveal from "@/components/ui/Reveal";
-import { CONTACT, DEVELOPER, HERO, HIGHLIGHT_CARDS, STOCK_IMAGES } from "@/data/project";
+import { CONTACT, DEVELOPER, HERO, HIGHLIGHT_CARDS, SITE, STOCK_IMAGES } from "@/data/project";
 import { unsplashUrl } from "@/lib/utils";
 
 export default function Hero() {
@@ -33,6 +33,10 @@ export default function Hero() {
           <Reveal as="p" delay={80} className="-mb-3 text-sm font-medium text-white/60">
             A Development by <span className="font-semibold text-white/85">{DEVELOPER.brand}</span> ·{" "}
             {DEVELOPER.experienceYears} Years of Legacy &amp; Trust
+          </Reveal>
+
+          <Reveal as="p" delay={110} className="-mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-gold-300/90">
+            {SITE.brandLine}
           </Reveal>
 
           <Reveal
