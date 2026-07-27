@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { InputJsonValue } from "@prisma/client/runtime/client";
 import { prisma } from "@/lib/prisma";
 import { upsertVisitor, findOrCreateSession, type SessionIdentity } from "@/lib/tracking/resolveVisitorSession";
+import { readIpFromHeaders } from "@/lib/tracking/geo";
 import type {
   CtaEventPayload,
   ErrorEventPayload,
@@ -69,7 +70,12 @@ export async function POST(request: Request) {
     const firstPath = pageviews[0]?.path;
     const lastPath = pageviews[pageviews.length - 1]?.path ?? firstPath;
 
-    const { session: dbSession, created } = await findOrCreateSession(visitor.id, session, firstPath);
+    const { session: dbSession, created } = await findOrCreateSession(
+      visitor.id,
+      session,
+      firstPath,
+      readIpFromHeaders(request.headers)
+    );
 
     if (events.length > 0) {
       const now = new Date();

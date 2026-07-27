@@ -12,6 +12,14 @@ const UNITS: Record<string, string> = {
   CLS: "",
 };
 
+const METRIC_NAMES: Record<string, string> = {
+  LCP: "Largest Contentful Paint",
+  INP: "Interaction to Next Paint",
+  FCP: "First Contentful Paint",
+  TTFB: "Time to First Byte",
+  CLS: "Cumulative Layout Shift",
+};
+
 function formatValue(metric: string, value: number): string {
   if (metric === "CLS") return value.toFixed(3);
   return `${Math.round(value)}${UNITS[metric] ?? ""}`;
@@ -45,7 +53,12 @@ export default async function AdminPerformancePage() {
         <tbody>
           {metrics.map((m) => (
             <Tr key={m.metric}>
-              <Td className="text-white">{m.metric}</Td>
+              <Td className="text-white">
+                {m.metric}
+                <span className="ml-2 text-xs font-normal text-neutral-500">
+                  {METRIC_NAMES[m.metric] ?? ""}
+                </span>
+              </Td>
               <Td className="tabular-nums">{formatValue(m.metric, m.avg)}</Td>
               <Td className="tabular-nums">{m.count}</Td>
               <Td>

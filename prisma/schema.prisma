@@ -61,6 +61,7 @@ model Session {
   gclid         String?
   fbclid        String?
   msclkid       String?
+  ipAddress     String?
   viewportWidth Int?
   viewportHeight Int?
   pageViews     PageView[]
@@ -73,6 +74,7 @@ model Session {
   leads         Lead[]
   mouseEvents   MouseEvent[]
   heatmapEvents HeatmapEvent[]
+  replayChunks  SessionReplay[]
 
   @@index([visitorId])
   @@index([startedAt])
@@ -200,6 +202,9 @@ model Lead {
   status    String   @default("new")
   createdAt DateTime @default(now())
 
+  metaCapiSentAt DateTime?
+  metaCapiError  String?
+
   @@index([createdAt])
   @@index([status])
 }
@@ -239,4 +244,135 @@ model HeatmapEvent {
   createdAt     DateTime @default(now())
 
   @@index([path, type])
+}
+
+// ---------------------------------------------------------------------------
+// Phase 5: Meta Ads integration — OAuth-connected ad accounts synced on a
+// cron, mirroring campaign/ad-set/ad structure and daily insight rollups.
+// ---------------------------------------------------------------------------
+
+model MetaAdAccount {
+  id             String     @id @default(cuid())
+  accountId      String     @unique
+  name           String?
+  currency       String?
+  timezoneName   String?
+  accessToken    String?
+  tokenExpiresAt DateTime?
+  connectedAt    DateTime   @default(now())
+  lastSyncedAt   DateTime?
+  lastSyncError  String?
+  campaigns      Campaign[]
+}
+
+model Campaign {
+  id             String        @id @default(cuid())
+  adAccount      MetaAdAccount @relation(fields: [adAccountId], references: [id])
+  adAccountId    String
+  metaId         String        @unique
+  name           String
+  status         String
+  objective      String?
+  dailyBudget    Float?
+  lifetimeBudget Float?
+  startTime      DateTime?
+  stopTime       DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  adSets         AdSet[]
+  insights       MetaInsight[]
+
+  @@index([adAccountId])
+  @@index([status])
+}
+
+model AdSet {
+  id               String        @id @default(cuid())
+  campaign         Campaign      @relation(fields: [campaignId], references: [id])
+  campaignId       String
+  metaId           String        @unique
+  name             String
+  status           String
+  dailyBudget      Float?
+  lifetimeBudget   Float?
+  optimizationGoal String?
+  billingEvent     String?
+  targeting        Json?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  ads              Ad[]
+  insights         MetaInsight[]
+
+  @@index([campaignId])
+}
+
+model Ad {
+  id           String        @id @default(cuid())
+  adSet        AdSet         @relation(fields: [adSetId], references: [id])
+  adSetId      String
+  metaId       String        @unique
+  name         String
+  status       String
+  creativeId   String?
+  headline     String?
+  bodyText     String?
+  thumbnailUrl String?
+  linkUrl      String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  insights     MetaInsight[]
+
+  @@index([adSetId])
+}
+
+model MetaInsight {
+  id               String    @id @default(cuid())
+  level            String
+  entityId         String
+  date             DateTime
+  campaign         Campaign? @relation(fields: [campaignId], references: [id])
+  campaignId       String?
+  adSet            AdSet?    @relation(fields: [adSetId], references: [id])
+  adSetId          String?
+  ad               Ad?       @relation(fields: [adId], references: [id])
+  adId             String?
+  spend            Float     @default(0)
+  impressions      Int       @default(0)
+  reach            Int       @default(0)
+  clicks           Int       @default(0)
+  linkClicks       Int       @default(0)
+  landingPageViews Int       @default(0)
+  ctr              Float     @default(0)
+  cpc              Float     @default(0)
+  cpm              Float     @default(0)
+  frequency        Float     @default(0)
+  videoViews       Int       @default(0)
+  results          Int       @default(0)
+  costPerResult    Float?
+  roas             Float?
+  createdAt        DateTime  @default(now())
+
+  @@unique([level, entityId, date])
+  @@index([date])
+  @@index([campaignId, date])
+  @@index([adSetId, date])
+  @@index([adId, date])
+}
+
+// ---------------------------------------------------------------------------
+// Phase 8: session replay — consent-gated rrweb capture. Events arrive from the
+// client in batches and are gzip-compressed before storage; `seq` preserves
+// playback order across chunks within a session.
+// ---------------------------------------------------------------------------
+
+model SessionReplay {
+  id         String   @id @default(cuid())
+  session    Session  @relation(fields: [sessionId], references: [id])
+  sessionId  String
+  seq        Int      @default(autoincrement())
+  data       Bytes
+  eventCount Int
+  createdAt  DateTime @default(now())
+
+  @@index([sessionId, seq])
 }

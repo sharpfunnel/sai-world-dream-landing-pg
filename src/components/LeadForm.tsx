@@ -101,9 +101,9 @@ export default function LeadForm({
     const link = buildEnquiryWhatsAppLink(values);
     submittedRef.current = true;
     trackFormEvent(id, "submitted");
+    submitLead(id, values).catch(() => {});
     setSubmitted(true);
     window.open(link, "_blank", "noopener,noreferrer");
-    submitLead(id, values).catch(() => {});
   };
 
   const isDark = variant === "card";

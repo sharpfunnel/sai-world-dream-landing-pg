@@ -2,6 +2,7 @@ import Link from "next/link";
 import { PageHeader } from "@/components/admin/PageHeader";
 import { Table, Thead, Th, Tr, Td, EmptyState } from "@/components/admin/Table";
 import { LeadStatusSelect } from "@/components/admin/LeadStatusSelect";
+import { ResendCapiButton } from "@/components/admin/ResendCapiButton";
 import { getLeads } from "@/lib/admin/queries";
 import { LEAD_STATUSES } from "@/lib/admin/constants";
 
@@ -45,6 +46,7 @@ export default async function AdminLeadsPage({
           <Th>Source</Th>
           <Th>Status</Th>
           <Th>Received</Th>
+          <Th>Meta CAPI</Th>
         </Thead>
         <tbody>
           {leads.map((lead) => (
@@ -59,6 +61,27 @@ export default async function AdminLeadsPage({
                 <LeadStatusSelect leadId={lead.id} status={lead.status} />
               </Td>
               <Td>{lead.createdAt.toLocaleString()}</Td>
+              <Td>
+                <div className="flex items-center gap-2">
+                  {lead.metaCapiSentAt ? (
+                    <span className="rounded-md bg-emerald-500/15 px-2 py-1 text-xs font-medium text-emerald-300">
+                      Sent
+                    </span>
+                  ) : lead.metaCapiError ? (
+                    <span
+                      className="rounded-md bg-red-500/15 px-2 py-1 text-xs font-medium text-red-300"
+                      title={lead.metaCapiError}
+                    >
+                      Failed
+                    </span>
+                  ) : (
+                    <span className="rounded-md bg-neutral-500/15 px-2 py-1 text-xs font-medium text-neutral-400">
+                      —
+                    </span>
+                  )}
+                  <ResendCapiButton leadId={lead.id} />
+                </div>
+              </Td>
             </Tr>
           ))}
         </tbody>

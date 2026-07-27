@@ -1,10 +1,11 @@
 import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import { ReactNode } from "react";
-import { GoogleTagManager } from "@next/third-parties/google";
 import "./globals.css";
 import { SITE } from "@/data/project";
 import { Analytics } from "@/components/Analytics";
+import { ConditionalGTM } from "@/components/ConditionalGTM";
+import { ReplayConsentBanner } from "@/components/ReplayConsentBanner";
 
 const GTM_ID = "GTM-W7MFGWFW";
 
@@ -42,7 +43,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={`${plusJakarta.variable} h-full antialiased`}>
-      <GoogleTagManager gtmId={GTM_ID} />
+      <ConditionalGTM gtmId={GTM_ID} />
       <body className="min-h-full flex flex-col bg-white text-navy-950">
         <noscript>
           <iframe
@@ -54,6 +55,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         </noscript>
         <Analytics />
         {children}
+        <ReplayConsentBanner />
       </body>
     </html>
   );

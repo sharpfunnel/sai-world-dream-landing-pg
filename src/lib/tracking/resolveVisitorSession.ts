@@ -59,7 +59,8 @@ export async function upsertVisitor(
 export async function findOrCreateSession(
   visitorId: string,
   session: SessionIdentity,
-  entryPath?: string
+  entryPath?: string,
+  ipAddress?: string | null
 ): Promise<{ session: Session; created: boolean }> {
   const existing = await prisma.session.findUnique({ where: { clientId: session.id } });
   if (existing) return { session: existing, created: false };
@@ -77,6 +78,7 @@ export async function findOrCreateSession(
       gclid: session.gclid,
       fbclid: session.fbclid,
       msclkid: session.msclkid,
+      ipAddress,
       viewportWidth: session.viewportWidth,
       viewportHeight: session.viewportHeight,
       entryPath,

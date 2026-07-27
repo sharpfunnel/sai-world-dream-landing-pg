@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { PageHeader } from "@/components/admin/PageHeader";
-import { HeatmapScatter } from "@/components/admin/HeatmapScatter";
+import { HeatmapOverlay } from "@/components/admin/HeatmapOverlay";
 import { EmptyState } from "@/components/admin/Table";
 import { getHeatmapPaths, getHeatmapPoints } from "@/lib/admin/queries";
 
@@ -22,7 +22,7 @@ export default async function AdminHeatmapPage({
     <div>
       <PageHeader
         title="Heatmap"
-        description="Click/hover density normalized to full page position — not an exact pixel overlay, since no page screenshot is captured."
+        description="Click/hover density overlaid on a live preview of the page. Position is normalized to full page height, so it's a close approximation rather than a pixel-exact overlay."
       />
 
       {paths.length === 0 ? (
@@ -59,7 +59,7 @@ export default async function AdminHeatmapPage({
           </div>
 
           <p className="mb-3 text-xs text-neutral-500">{points.length} points</p>
-          <HeatmapScatter points={points} color={type === "click" ? "#d03b3b" : "#3987e5"} />
+          <HeatmapOverlay key={path} path={path} points={points} color={type === "click" ? "#d03b3b" : "#3987e5"} />
         </>
       )}
     </div>

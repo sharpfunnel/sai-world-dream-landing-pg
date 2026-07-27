@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type ElementType, type ReactNode } from "react";
+import { isAdminPreview } from "@/lib/tracking/client";
 
 const VARIANTS: Record<string, { hidden: string; visible: string }> = {
   up: { hidden: "opacity-0 translate-y-6", visible: "opacity-100 translate-y-0" },
@@ -39,6 +40,13 @@ export default function Reveal({
   useEffect(() => {
     const node = ref.current;
     if (!node) return;
+    // The admin heatmap preview renders the page in a non-scrolling iframe, so
+    // scroll-triggered reveals would never fire below the initial fold — show
+    // everything immediately there instead.
+    if (isAdminPreview()) {
+      setVisible(true);
+      return;
+    }
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {

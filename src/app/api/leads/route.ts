@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { upsertVisitor, findOrCreateSession, type SessionIdentity } from "@/lib/tracking/resolveVisitorSession";
+import { readIpFromHeaders } from "@/lib/tracking/geo";
+import { sendLeadConversionEvent } from "@/lib/meta/capi";
 
 export const runtime = "nodejs";
 
@@ -45,8 +47,9 @@ export async function POST(request: Request) {
   const { visitorId, session, formId, name, phone, email, config, budget, message } = body;
 
   try {
+    const ip = readIpFromHeaders(request.headers);
     const visitor = await upsertVisitor(visitorId, request.headers, session);
-    const { session: dbSession } = await findOrCreateSession(visitor.id, session);
+    const { session: dbSession } = await findOrCreateSession(visitor.id, session, undefined, ip);
 
     const lead = await prisma.lead.create({
       data: {
@@ -61,8 +64,13 @@ export async function POST(request: Request) {
         message,
         source: session.utmSource,
       },
-      select: { id: true },
     });
+
+    await sendLeadConversionEvent(lead, dbSession, {
+      ip,
+      userAgent: request.headers.get("user-agent"),
+      sourceUrl: request.headers.get("referer"),
+    }).catch((error) => console.error("[/api/leads] CAPI dispatch threw unexpectedly", error));
 
     return NextResponse.json({ ok: true, leadId: lead.id });
   } catch (error) {

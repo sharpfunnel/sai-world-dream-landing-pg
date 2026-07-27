@@ -2,66 +2,77 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  LayoutDashboard,
-  Users,
-  MousePointerClick,
-  ClipboardList,
-  Gauge,
-  AlertTriangle,
-  Flame,
-  LogOut,
-} from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import { logout } from "@/lib/auth/actions";
 
 const NAV_ITEMS = [
-  { href: "/admin", label: "Overview", icon: LayoutDashboard },
-  { href: "/admin/leads", label: "Leads", icon: ClipboardList },
-  { href: "/admin/sessions", label: "Sessions", icon: Users },
-  { href: "/admin/ctas", label: "CTAs", icon: MousePointerClick },
-  { href: "/admin/forms", label: "Forms", icon: ClipboardList },
-  { href: "/admin/performance", label: "Performance", icon: Gauge },
-  { href: "/admin/errors", label: "Errors", icon: AlertTriangle },
-  { href: "/admin/heatmap", label: "Heatmap", icon: Flame },
+  { href: "/admin", label: "Overview" },
+  { href: "/admin/leads", label: "Leads", badge: "leadsCount" as const },
+  { href: "/admin/sessions", label: "Sessions", badge: "sessionsCount" as const },
+  { href: "/admin/heatmap", label: "Heatmap" },
+  { href: "/admin/campaigns", label: "Campaigns" },
+  { href: "/admin/funnels", label: "Funnels" },
+  { href: "/admin/ctas", label: "CTAs" },
+  { href: "/admin/forms", label: "Forms" },
+  { href: "/admin/performance", label: "Performance" },
+  { href: "/admin/errors", label: "Errors" },
+  { href: "/admin/reports", label: "Reports" },
 ];
 
-export function AdminNav() {
+export function AdminNav({ leadsCount, sessionsCount }: { leadsCount: number; sessionsCount: number }) {
   const pathname = usePathname();
+  const counts = { leadsCount, sessionsCount };
 
   return (
-    <aside className="sticky top-0 flex h-screen w-56 shrink-0 flex-col border-r border-white/10 px-3 py-6">
-      <div className="px-2 pb-6">
-        <p className="text-sm font-semibold text-white">Sai World Dreams</p>
-        <p className="text-xs text-neutral-500">Analytics</p>
+    <header className="sticky top-0 z-10 border-b border-white/10 bg-neutral-950/95 backdrop-blur">
+      <div className="mx-auto flex max-w-[1400px] items-center justify-between px-4 py-4 sm:px-8">
+        <p className="text-base font-semibold tracking-tight text-white">
+          Sai World Dreams<span className="text-gold-400">.</span>
+        </p>
+
+        <div className="flex items-center gap-3">
+          <Link
+            href="/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1 text-sm font-medium text-neutral-400 transition-colors hover:text-neutral-200"
+          >
+            View site
+            <ArrowUpRight className="h-3.5 w-3.5" strokeWidth={2} />
+          </Link>
+          <form action={logout}>
+            <button
+              type="submit"
+              className="rounded-md border border-white/15 px-3.5 py-1.5 text-sm font-medium text-neutral-200 transition-colors hover:bg-white/5"
+            >
+              Log out
+            </button>
+          </form>
+        </div>
       </div>
 
-      <nav className="flex-1 space-y-0.5">
-        {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+      <nav className="mx-auto flex max-w-[1400px] gap-6 overflow-x-auto px-4 sm:px-8">
+        {NAV_ITEMS.map(({ href, label, badge }) => {
           const active = href === "/admin" ? pathname === "/admin" : pathname.startsWith(href);
+          const count = badge ? counts[badge] : null;
           return (
             <Link
               key={href}
               href={href}
-              className={`flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                active ? "bg-white/10 text-white" : "text-neutral-400 hover:bg-white/5 hover:text-neutral-200"
+              className={`flex shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 pb-3 pt-1 text-sm font-medium transition-colors ${
+                active ? "border-gold-400 text-white" : "border-transparent text-neutral-400 hover:text-neutral-200"
               }`}
             >
-              <Icon className="h-4 w-4 shrink-0" strokeWidth={2} />
               {label}
+              {count !== null && count !== undefined && (
+                <span className="rounded-full bg-white/10 px-1.5 py-0.5 text-[10px] font-semibold text-neutral-300">
+                  {count}
+                </span>
+              )}
             </Link>
           );
         })}
       </nav>
-
-      <form action={logout}>
-        <button
-          type="submit"
-          className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium text-neutral-400 transition-colors hover:bg-white/5 hover:text-neutral-200"
-        >
-          <LogOut className="h-4 w-4 shrink-0" strokeWidth={2} />
-          Sign out
-        </button>
-      </form>
-    </aside>
+    </header>
   );
 }

@@ -1,4 +1,5 @@
 import "server-only";
+import { gunzipSync } from "zlib";
 import { prisma } from "@/lib/prisma";
 
 function daysAgo(days: number): Date {
@@ -12,23 +13,34 @@ function dayKey(date: Date): string {
 export async function getOverviewStats(days = 30) {
   const since = daysAgo(days);
 
-  const [visitorCount, sessionCount, leadCount, bounceCount, durationAgg, maxDepths, pageviewCount] =
-    await Promise.all([
-      prisma.visitor.count({ where: { firstSeenAt: { gte: since } } }),
-      prisma.session.count({ where: { startedAt: { gte: since } } }),
-      prisma.lead.count({ where: { createdAt: { gte: since } } }),
-      prisma.session.count({ where: { startedAt: { gte: since }, isBounce: true } }),
-      prisma.session.aggregate({
-        where: { startedAt: { gte: since }, totalDuration: { not: null } },
-        _avg: { totalDuration: true },
-      }),
-      prisma.scrollEvent.groupBy({
-        by: ["sessionId"],
-        where: { createdAt: { gte: since } },
-        _max: { depth: true },
-      }),
-      prisma.pageView.count({ where: { session: { startedAt: { gte: since } } } }),
-    ]);
+  const [
+    visitorCount,
+    sessionCount,
+    leadCount,
+    bounceCount,
+    durationAgg,
+    maxDepths,
+    pageviewCount,
+    scrolledDeepCount,
+    ctaClickCount,
+  ] = await Promise.all([
+    prisma.visitor.count({ where: { firstSeenAt: { gte: since } } }),
+    prisma.session.count({ where: { startedAt: { gte: since } } }),
+    prisma.lead.count({ where: { createdAt: { gte: since } } }),
+    prisma.session.count({ where: { startedAt: { gte: since }, isBounce: true } }),
+    prisma.session.aggregate({
+      where: { startedAt: { gte: since }, totalDuration: { not: null } },
+      _avg: { totalDuration: true },
+    }),
+    prisma.scrollEvent.groupBy({
+      by: ["sessionId"],
+      where: { createdAt: { gte: since } },
+      _max: { depth: true },
+    }),
+    prisma.pageView.count({ where: { session: { startedAt: { gte: since } } } }),
+    prisma.session.count({ where: { startedAt: { gte: since }, scrollEvents: { some: { depth: { gte: 50 } } } } }),
+    prisma.session.count({ where: { startedAt: { gte: since }, ctaEvents: { some: { action: "clicked" } } } }),
+  ]);
 
   const avgScrollDepth = maxDepths.length
     ? maxDepths.reduce((sum, r) => sum + (r._max.depth ?? 0), 0) / maxDepths.length
@@ -39,11 +51,21 @@ export async function getOverviewStats(days = 30) {
     sessionCount,
     leadCount,
     pageviewCount,
+    scrolledDeepCount,
+    ctaClickCount,
     bounceRate: sessionCount ? (bounceCount / sessionCount) * 100 : 0,
     conversionRate: sessionCount ? (leadCount / sessionCount) * 100 : 0,
     avgSessionDuration: durationAgg._avg.totalDuration ?? 0,
     avgScrollDepth,
   };
+}
+
+export async function getNavBadgeCounts() {
+  const [leadsCount, sessionsCount] = await Promise.all([
+    prisma.lead.count({ where: { createdAt: { gte: daysAgo(30) } } }),
+    prisma.session.count({ where: { startedAt: { gte: daysAgo(30) } } }),
+  ]);
+  return { leadsCount, sessionsCount };
 }
 
 export async function getDailyTimeSeries(days = 30) {
@@ -74,20 +96,32 @@ export async function getDailyTimeSeries(days = 30) {
   return Array.from(buckets.values());
 }
 
-export async function getTopUtmSources(days = 30, limit = 8) {
+export async function getTrafficSources(days = 30, limit = 8) {
   const since = daysAgo(days);
   const grouped = await prisma.session.groupBy({
     by: ["utmSource", "utmMedium"],
-    where: { startedAt: { gte: since }, utmSource: { not: null } },
+    where: { startedAt: { gte: since } },
     _count: { _all: true },
-    orderBy: { _count: { utmSource: "desc" } },
+    orderBy: { _count: { id: "desc" } },
     take: limit,
   });
-  return grouped.map((g) => ({
-    source: g.utmSource ?? "unknown",
-    medium: g.utmMedium ?? "—",
-    sessions: g._count._all,
-  }));
+
+  const rows = await Promise.all(
+    grouped.map(async (g) => {
+      const where = { startedAt: { gte: since }, utmSource: g.utmSource, utmMedium: g.utmMedium };
+      const leads = await prisma.session.count({ where: { ...where, leads: { some: {} } } });
+      const sessions = g._count._all;
+      return {
+        source: g.utmSource ?? "direct",
+        medium: g.utmMedium ?? "(none)",
+        sessions,
+        leads,
+        conversionRate: sessions ? (leads / sessions) * 100 : 0,
+      };
+    })
+  );
+
+  return rows.sort((a, b) => b.sessions - a.sessions);
 }
 
 export async function getRecentLeads(limit = 5) {
@@ -110,7 +144,11 @@ export async function getSessions(limit = 100) {
   return prisma.session.findMany({
     orderBy: { startedAt: "desc" },
     take: limit,
-    include: { visitor: true, _count: { select: { pageViews: true } } },
+    include: {
+      visitor: true,
+      leads: { select: { config: true }, orderBy: { createdAt: "asc" }, take: 1 },
+      _count: { select: { pageViews: true, replayChunks: true } },
+    },
   });
 }
 
@@ -231,4 +269,208 @@ export async function getHeatmapPoints(path: string, type: "click" | "hover", li
     take: limit,
     orderBy: { createdAt: "desc" },
   });
+}
+
+export async function getMetaAdAccounts() {
+  return prisma.metaAdAccount.findMany({ orderBy: { connectedAt: "desc" } });
+}
+
+export async function getMetaSummaryStats(days = 30) {
+  const since = daysAgo(days);
+  const agg = await prisma.metaInsight.aggregate({
+    where: { level: "campaign", date: { gte: since } },
+    _sum: { spend: true, impressions: true, clicks: true, reach: true, results: true },
+  });
+
+  const spend = agg._sum.spend ?? 0;
+  const impressions = agg._sum.impressions ?? 0;
+  const clicks = agg._sum.clicks ?? 0;
+  const results = agg._sum.results ?? 0;
+
+  return {
+    spend,
+    impressions,
+    clicks,
+    reach: agg._sum.reach ?? 0,
+    results,
+    ctr: impressions ? (clicks / impressions) * 100 : 0,
+    cpc: clicks ? spend / clicks : 0,
+    cpm: impressions ? (spend / impressions) * 1000 : 0,
+    costPerResult: results ? spend / results : 0,
+  };
+}
+
+// Site-behavior columns are matched against a campaign by exact (case-insensitive)
+// utm_campaign = campaign name — the standard "utm_campaign={{campaign.name}}" dynamic
+// URL parameter in Meta Ads Manager. Campaigns without that tagging show zeros here.
+async function getCampaignBehaviorStats(campaignName: string, since: Date) {
+  const where = { startedAt: { gte: since }, utmCampaign: { equals: campaignName, mode: "insensitive" as const } };
+  const [sessions, scrolled, ctaClicked, formStarted, leads] = await Promise.all([
+    prisma.session.count({ where }),
+    prisma.session.count({ where: { ...where, scrollEvents: { some: { depth: { gte: 25 } } } } }),
+    prisma.session.count({ where: { ...where, ctaEvents: { some: { action: "clicked" } } } }),
+    prisma.session.count({ where: { ...where, formEvents: { some: { action: "started" } } } }),
+    prisma.session.count({ where: { ...where, leads: { some: {} } } }),
+  ]);
+  return { sessions, scrolled, ctaClicked, formStarted, leads };
+}
+
+export async function getCampaignPerformance(days = 30) {
+  const since = daysAgo(days);
+  const campaigns = await prisma.campaign.findMany({
+    include: {
+      adAccount: { select: { name: true, currency: true } },
+      insights: { where: { level: "campaign", date: { gte: since } } },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  const rows = await Promise.all(
+    campaigns.map(async (c) => {
+      const spend = c.insights.reduce((sum, i) => sum + i.spend, 0);
+      const impressions = c.insights.reduce((sum, i) => sum + i.impressions, 0);
+      const clicks = c.insights.reduce((sum, i) => sum + i.clicks, 0);
+      const reach = c.insights.reduce((sum, i) => sum + i.reach, 0);
+      const results = c.insights.reduce((sum, i) => sum + i.results, 0);
+      const behavior = await getCampaignBehaviorStats(c.name, since);
+
+      return {
+        id: c.id,
+        name: c.name,
+        status: c.status,
+        objective: c.objective,
+        accountName: c.adAccount.name,
+        currency: c.adAccount.currency,
+        spend,
+        impressions,
+        clicks,
+        reach,
+        results,
+        ctr: impressions ? (clicks / impressions) * 100 : 0,
+        cpc: clicks ? spend / clicks : 0,
+        cpm: impressions ? (spend / impressions) * 1000 : 0,
+        costPerResult: results ? spend / results : 0,
+        ...behavior,
+      };
+    })
+  );
+
+  return rows.sort((a, b) => b.spend - a.spend);
+}
+
+export interface FunnelStage {
+  key: string;
+  label: string;
+  count: number;
+  conversionFromStart: number;
+  dropOffFromPrev: number;
+}
+
+export async function getFunnelStats(days = 30, source: "all" | "meta" = "all"): Promise<FunnelStage[]> {
+  const since = daysAgo(days);
+  const sessionWhere = source === "meta" ? { startedAt: { gte: since }, fbclid: { not: null } } : { startedAt: { gte: since } };
+
+  const [sessions, scrolled, ctaClicked, formStarted, leadSubmitted, metaClicksAgg] = await Promise.all([
+    prisma.session.count({ where: sessionWhere }),
+    prisma.session.count({ where: { ...sessionWhere, scrollEvents: { some: { depth: { gte: 25 } } } } }),
+    prisma.session.count({ where: { ...sessionWhere, ctaEvents: { some: { action: "clicked" } } } }),
+    prisma.session.count({ where: { ...sessionWhere, formEvents: { some: { action: "started" } } } }),
+    prisma.session.count({ where: { ...sessionWhere, leads: { some: {} } } }),
+    source === "meta"
+      ? prisma.metaInsight.aggregate({ where: { level: "campaign", date: { gte: since } }, _sum: { linkClicks: true, clicks: true } })
+      : Promise.resolve(null),
+  ]);
+
+  const adClicks = metaClicksAgg ? Math.round(metaClicksAgg._sum.linkClicks || metaClicksAgg._sum.clicks || 0) : null;
+
+  const raw: { key: string; label: string; count: number }[] = [];
+  if (adClicks !== null) raw.push({ key: "adClicks", label: "Ad clicks (Meta)", count: adClicks });
+  raw.push({ key: "landingPageViews", label: "Landing page views", count: sessions });
+  raw.push({ key: "scrolled", label: "Scrolled 25%+", count: scrolled });
+  raw.push({ key: "ctaClicked", label: "CTA clicked", count: ctaClicked });
+  raw.push({ key: "formStarted", label: "Form started", count: formStarted });
+  raw.push({ key: "leadSubmitted", label: "Lead submitted", count: leadSubmitted });
+
+  const first = raw[0]?.count ?? 0;
+  return raw.map((stage, i) => ({
+    ...stage,
+    conversionFromStart: first ? Math.round((stage.count / first) * 1000) / 10 : 0,
+    dropOffFromPrev: i === 0 || !raw[i - 1].count ? 0 : Math.round((1 - stage.count / raw[i - 1].count) * 1000) / 10,
+  }));
+}
+
+function summarizeInsights(insights: { spend: number; impressions: number; clicks: number; results: number }[]) {
+  const spend = insights.reduce((sum, i) => sum + i.spend, 0);
+  const impressions = insights.reduce((sum, i) => sum + i.impressions, 0);
+  const clicks = insights.reduce((sum, i) => sum + i.clicks, 0);
+  const results = insights.reduce((sum, i) => sum + i.results, 0);
+  return {
+    spend,
+    impressions,
+    clicks,
+    results,
+    ctr: impressions ? (clicks / impressions) * 100 : 0,
+    cpc: clicks ? spend / clicks : 0,
+    cpm: impressions ? (spend / impressions) * 1000 : 0,
+    costPerResult: results ? spend / results : 0,
+  };
+}
+
+export async function getCampaignDetail(campaignId: string, days = 30) {
+  const since = daysAgo(days);
+  const campaign = await prisma.campaign.findUnique({
+    where: { id: campaignId },
+    include: {
+      adAccount: { select: { name: true, currency: true } },
+      adSets: {
+        include: {
+          insights: { where: { level: "adset", date: { gte: since } } },
+          ads: { include: { insights: { where: { level: "ad", date: { gte: since } } } } },
+        },
+      },
+    },
+  });
+  if (!campaign) return null;
+
+  return {
+    id: campaign.id,
+    name: campaign.name,
+    status: campaign.status,
+    objective: campaign.objective,
+    accountName: campaign.adAccount.name,
+    currency: campaign.adAccount.currency,
+    adSets: campaign.adSets.map((as) => ({
+      id: as.id,
+      name: as.name,
+      status: as.status,
+      ...summarizeInsights(as.insights),
+      ads: as.ads.map((ad) => ({
+        id: ad.id,
+        name: ad.name,
+        status: ad.status,
+        headline: ad.headline,
+        thumbnailUrl: ad.thumbnailUrl,
+        ...summarizeInsights(ad.insights),
+      })),
+    })),
+  };
+}
+
+export async function getSessionReplay(sessionId: string) {
+  const [session, chunks] = await Promise.all([
+    prisma.session.findUnique({ where: { id: sessionId }, include: { visitor: true } }),
+    prisma.sessionReplay.findMany({
+      where: { sessionId },
+      orderBy: { seq: "asc" },
+      select: { data: true },
+    }),
+  ]);
+  if (!session || chunks.length === 0) return null;
+
+  const events: unknown[] = [];
+  for (const chunk of chunks) {
+    const json = gunzipSync(chunk.data).toString("utf-8");
+    events.push(...(JSON.parse(json) as unknown[]));
+  }
+  return { session, events };
 }

@@ -47,7 +47,7 @@ function uuid(): string {
   });
 }
 
-function getOrCreateVisitorId(): { id: string; isNew: boolean } {
+export function getOrCreateVisitorId(): { id: string; isNew: boolean } {
   try {
     const existing = window.localStorage.getItem(VISITOR_STORAGE_KEY);
     if (existing) return { id: existing, isNew: false };
@@ -73,7 +73,7 @@ function readUtm(): Record<string, string | undefined> {
   };
 }
 
-function getSession(): SessionContext {
+export function getSession(): SessionContext {
   const now = Date.now();
   try {
     const raw = window.sessionStorage.getItem(SESSION_STORAGE_KEY);
@@ -153,22 +153,34 @@ export interface LeadFields {
   message?: string;
 }
 
-/** Best-effort persistence — failures are swallowed so they never block the WhatsApp handoff. */
+/**
+ * Persists the lead. Submission is immediately followed by a WhatsApp app handoff
+ * (native app switch on mobile), which can background or tear down the page before
+ * a plain fetch finishes — so this prefers sendBeacon (survives that handoff) and
+ * falls back to a keepalive fetch, mirroring the reliable-delivery pattern in send().
+ */
 export async function submitLead(formId: string, fields: LeadFields): Promise<boolean> {
   if (typeof window === "undefined") return false;
   const visitor = getOrCreateVisitorId();
   const session = getSession();
+  const payload = {
+    visitorId: visitor.id,
+    session: buildSessionPayload(session),
+    formId,
+    ...fields,
+  };
+
+  if (navigator.sendBeacon) {
+    const blob = new Blob([JSON.stringify(payload)], { type: "application/json" });
+    if (navigator.sendBeacon(LEADS_ENDPOINT, blob)) return true;
+  }
 
   try {
     const res = await fetch(LEADS_ENDPOINT, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        visitorId: visitor.id,
-        session: buildSessionPayload(session),
-        formId,
-        ...fields,
-      }),
+      body: JSON.stringify(payload),
+      keepalive: true,
     });
     return res.ok;
   } catch {
@@ -261,6 +273,13 @@ export function trackHeatmap(
 ) {
   const payload: HeatmapEventPayload = { type: "heatmap", path, heatmapType, xPct, yPct, viewportWidth, timestamp: Date.now() };
   enqueue(payload);
+}
+
+/** True when the current document is the admin heatmap's iframe preview of a live page. */
+export function isAdminPreview(): boolean {
+  if (typeof window === "undefined") return false;
+  if (window.self !== window.top) return true;
+  return new URLSearchParams(window.location.search).has("admin_preview");
 }
 
 export function initAnalytics() {
