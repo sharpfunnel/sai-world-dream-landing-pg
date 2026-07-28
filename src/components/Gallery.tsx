@@ -5,7 +5,7 @@ import { Expand, X } from "lucide-react";
 import Container from "@/components/ui/Container";
 import SectionHeading from "@/components/ui/SectionHeading";
 import Reveal from "@/components/ui/Reveal";
-import { GALLERY_CATEGORIES } from "@/data/project";
+import { GALLERY_CATEGORIES, SITE } from "@/data/project";
 import { unsplashUrl } from "@/lib/utils";
 
 const HEIGHTS = ["h-52", "h-64", "h-44", "h-72", "h-56", "h-60"];
@@ -19,7 +19,7 @@ export default function Gallery() {
         <SectionHeading
           eyebrow="Gallery"
           title="A Glimpse Into Your Future Home"
-          description="Images shown are representational stock visuals — visit us on-site to experience Sai World Dreams first-hand."
+          description={`Images shown are representational stock visuals — visit us on-site to experience ${SITE.projectName} first-hand.`}
         />
 
         <div className="columns-2 gap-4 sm:columns-3 lg:columns-4 [column-fill:_balance]">

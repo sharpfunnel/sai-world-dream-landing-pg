@@ -14,7 +14,7 @@ export default function LocationAdvantages() {
         <SectionHeading
           eyebrow="Location Advantages"
           title="Perfectly Placed on Kalyan Shil Road"
-          description="Seamless access to arterial roads, upcoming metro lines and everyday essentials — all within minutes."
+          description="Seamless access to Mumbai and Navi Mumbai via arterial roads, the upcoming metro lines and the multimodal corridor — everyday essentials within minutes."
         />
 
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_1fr]">
@@ -23,7 +23,7 @@ export default function LocationAdvantages() {
             className="overflow-hidden rounded-2xl border border-navy-950/10 shadow-sm"
           >
             <iframe
-              title="Sai World Dreams location map"
+              title={`${SITE.projectName} location map`}
               src={`https://www.google.com/maps?q=${mapQuery}&output=embed`}
               className="h-64 w-full sm:h-full sm:min-h-80"
               loading="lazy"

@@ -1,4 +1,4 @@
-// Central content source for the Sai World Dreams landing page.
+// Central content source for the Paradise Sai World Dreams landing page.
 // Sourced from official Paradise Group brochure, leaflet & cost sheet (W.E.F. 13/10/2025).
 
 export const CONTACT = {
@@ -7,25 +7,25 @@ export const CONTACT = {
   phoneAltDisplay: "84510 47710",
   phoneAltHref: "tel:+918451047710",
   whatsappHref:
-    "https://wa.me/918451047710?text=Hi%2C%20I%27m%20interested%20in%20Sai%20World%20Dreams%2C%20Dombivli.%20Please%20share%20more%20details.",
+    "https://wa.me/918451047710?text=Hi%2C%20I%27m%20interested%20in%20Paradise%20Sai%20World%20Dreams%2C%20Dombivli.%20Please%20share%20more%20details.",
   email: "saiworlddreams@paradisegroup.co.in",
   salesEmail: "sales@paradisegroup.co.in",
   enquiryEmail: "enquiry@paradisegroup.co.in",
 };
 
 export const SITE = {
-  projectName: "Sai World Dreams",
-  brandLine: "Paradise Sai World Dream",
+  projectName: "Paradise Sai World Dreams",
+  brandLine: "Paradise Sai World Dreams",
   tagline: "Live the Dream",
   location: "Dombivli",
   url: "https://saiworlddreams.example.com",
   reraNumber: "P51700035191",
   reraUrl: "https://maharera.mahaonline.gov.in",
-  siteAddress: "Sai World Dreams, Kalyan Shil Road, Dombivli",
-  seoTitle: "Sai World Dreams Dombivli | Luxury 1, 2, 3 BHK Homes",
+  siteAddress: "Paradise Sai World Dreams, Kalyan Shil Road, Dombivli",
+  seoTitle: "Paradise Sai World Dreams, Dombivli | Homes for Mumbai & Navi Mumbai Buyers",
   metaDescription:
-    "Book your dream home at Sai World Dreams Dombivli. Premium 1, 2, 2.5 & 3 BHK residences with world-class amenities, retail boulevard, and excellent connectivity.",
-  primaryKeyword: "Sai World Dreams Dombivli",
+    "Book your dream home at Paradise Sai World Dreams, Dombivli. Premium 1, 2, 2.5 & 3 BHK residences with world-class amenities, retail boulevard, and excellent connectivity for homebuyers from Mumbai & Navi Mumbai.",
+  primaryKeyword: "Paradise Sai World Dreams Dombivli",
   secondaryKeywords: [
     "Luxury Flats in Dombivli",
     "1 BHK in Dombivli",
@@ -36,6 +36,9 @@ export const SITE = {
     "Integrated Township Dombivli",
     "Homes Near Kalyan Shil Road",
     "MahaRERA Approved Project Dombivli",
+    "Homes for Mumbai Homebuyers",
+    "Property for Navi Mumbai Buyers",
+    "Best Investment Near Navi Mumbai",
   ],
 };
 
@@ -90,9 +93,9 @@ export const TOWERS = [
 ];
 
 export const HERO = {
-  heading: "Live the Dream at Sai World Dreams, Dombivli",
+  heading: "Live the Dream at Paradise Sai World Dreams, Dombivli",
   subheading:
-    "Luxury 1, 2, 2.5 & 3 BHK Homes in an 18-Acre Integrated Global Lifestyle Township",
+    "Luxury 1, 2, 2.5 & 3 BHK Homes in an 18-Acre Integrated Global Lifestyle Township — perfectly connected for homebuyers from Mumbai & Navi Mumbai",
 };
 
 export const HIGHLIGHT_CARDS = [
@@ -115,8 +118,9 @@ export const CONFIG_OPTIONS = [
 export const ABOUT = {
   title: "Experience a Global Lifestyle Like Never Before",
   paragraphs: [
-    "Sai World Dreams is an integrated 18-acre premium township in Dombivli that combines luxury residences, commercial spaces, retail avenues, premium amenities, landscaped open spaces and exceptional connectivity into one landmark destination.",
+    "Paradise Sai World Dreams is an integrated 18-acre premium township in Dombivli that combines luxury residences, commercial spaces, retail avenues, premium amenities, landscaped open spaces and exceptional connectivity into one landmark destination.",
     'Designed around the concept of "Live the Dream," the development offers an all-inclusive lifestyle for modern families — Dombivli\'s first mixed-use themed luxury world, inspired by the Dubai lifestyle.',
+    "Perfectly positioned for homebuyers from Mumbai and Navi Mumbai, it offers significantly more space and a resort-style lifestyle without compromising on connectivity to the city.",
   ],
 };
 
@@ -395,7 +399,7 @@ export const CONSTRUCTION_STATUS = [
 export const FAQS = [
   {
     q: "What configurations are available?",
-    a: "Sai World Dreams offers premium 1 BHK, 2 BHK, 2.5 BHK and 3 BHK homes across 8 residential towers — Castle, Vista, Mist, Spring, Orchard, Meadows, Breeze & Heaven (all G+35) — within an 18-acre integrated township.",
+    a: "Paradise Sai World Dreams offers premium 1 BHK, 2 BHK, 2.5 BHK and 3 BHK homes across 8 residential towers — Castle, Vista, Mist, Spring, Orchard, Meadows, Breeze & Heaven (all G+35) — within an 18-acre integrated township.",
   },
   {
     q: "What is the starting price?",
@@ -422,7 +426,11 @@ export const FAQS = [
     a: "The township features 40+ lifestyle amenities organised across four branded zones — Nirvana World (health & fitness), Zen World (landscape & leisure), Euphoria World (entertainment) and La Dreams Club (the high-society clubhouse).",
   },
   {
-    q: "Who is developing Sai World Dreams?",
-    a: "Sai World Dreams is developed by Paradise Group Builders & Developers, an ISO 9001:2015 certified organisation with 32+ years of experience and 125+ completed projects across Navi Mumbai and Mumbai.",
+    q: "Who is developing Paradise Sai World Dreams?",
+    a: "Paradise Sai World Dreams is developed by Paradise Group Builders & Developers, an ISO 9001:2015 certified organisation with 32+ years of experience and 125+ completed projects across Navi Mumbai and Mumbai.",
+  },
+  {
+    q: "Is Paradise Sai World Dreams a good option for homebuyers from Mumbai and Navi Mumbai?",
+    a: "Yes — located on Kalyan Shil Road with direct access to the Multimodal Corridor (5 min) and just 30 minutes from Navi Mumbai Airport, Paradise Sai World Dreams gives Mumbai and Navi Mumbai homebuyers significantly more space and a resort-style lifestyle at a fraction of city prices, without compromising on connectivity. Paradise Group brings 32+ years of legacy building homes across Navi Mumbai and Mumbai, including Kharghar, Panvel, Ulwe and Taloja.",
   },
 ];

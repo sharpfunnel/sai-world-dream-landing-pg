@@ -112,6 +112,14 @@ body {
   color: var(--color-navy-950);
 }
 
+/* rrweb-player's controller bar has a hardcoded white background but sets no text
+   color of its own, so it inherits the admin dashboard's light (dark-theme) text and
+   renders white-on-white. Force dark text to match the white bar the library draws. */
+.rr-controller,
+.rr-controller * {
+  color: #11103e;
+}
+
 .text-gold-foil {
   background-image: linear-gradient(135deg, #f3bf85 0%, #e9a05a 35%, #9e5a22 70%, #e9a05a 100%);
   -webkit-background-clip: text;

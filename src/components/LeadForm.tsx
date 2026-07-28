@@ -3,7 +3,6 @@
 import { ChangeEvent, FormEvent, FocusEvent, InvalidEvent, useEffect, useRef, useState } from "react";
 import { CheckCircle2, Send } from "lucide-react";
 import { CONFIG_OPTIONS } from "@/data/project";
-import { buildEnquiryWhatsAppLink } from "@/lib/utils";
 import { submitLead, trackFormEvent } from "@/lib/tracking/client";
 
 export default function LeadForm({
@@ -98,12 +97,10 @@ export default function LeadForm({
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const link = buildEnquiryWhatsAppLink(values);
     submittedRef.current = true;
     trackFormEvent(id, "submitted");
     submitLead(id, values).catch(() => {});
     setSubmitted(true);
-    window.open(link, "_blank", "noopener,noreferrer");
   };
 
   const isDark = variant === "card";
@@ -124,7 +121,7 @@ export default function LeadForm({
           Thank You!
         </h3>
         <p className={`text-sm ${isDark ? "text-white/70" : "text-navy-700/80"}`}>
-          Your enquiry has been sent over WhatsApp. Our team will contact you shortly.
+          Your enquiry has been received. Our team will contact you shortly.
         </p>
         <button
           type="button"

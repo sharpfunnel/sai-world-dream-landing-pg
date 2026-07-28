@@ -14,7 +14,7 @@ export default function WhyInvest() {
         <SectionHeading
           eyebrow="Why Invest in Dombivli?"
           title="Riding the Next Wave of Infrastructure Growth"
-          description="Dombivli is fast becoming one of MMR's most connected micro-markets, backed by a pipeline of transformational infrastructure projects."
+          description="Dombivli is fast becoming one of MMR's most connected micro-markets, backed by a pipeline of transformational infrastructure projects linking it seamlessly to Mumbai and Navi Mumbai."
         />
 
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:items-start lg:gap-10">

@@ -28,15 +28,15 @@ export default function Header() {
       <Container className="flex items-center justify-between py-3.5">
         <a href="#top" className="flex flex-col">
           <span className="flex items-baseline gap-2">
-            <span className="font-display text-xl sm:text-2xl font-semibold text-navy-950">
-              Sai World Dreams
+            <span className="font-display text-lg sm:text-2xl font-semibold text-navy-950">
+              {SITE.projectName}
             </span>
             <span className="hidden sm:inline text-xs uppercase tracking-[0.2em] text-gold-600">
               {SITE.location}
             </span>
           </span>
           <span className="text-[10px] sm:text-xs font-medium uppercase tracking-wide text-navy-950/45">
-            by {DEVELOPER.brand} &middot; {SITE.brandLine}
+            by {DEVELOPER.brand} &middot; {SITE.tagline}
           </span>
         </a>
 

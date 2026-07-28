@@ -8,7 +8,7 @@ export default function Footer() {
           <div className="flex flex-col gap-3">
             <span className="font-display text-xl font-semibold text-white">{SITE.projectName}</span>
             <span className="text-xs font-semibold uppercase tracking-[0.16em] text-gold-300/80">
-              {SITE.brandLine}
+              {SITE.tagline}
             </span>
             <p className="text-sm leading-relaxed text-white/60">
               An 18-acre integrated global lifestyle township in {SITE.location}, offering luxury
