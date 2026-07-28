@@ -7,9 +7,11 @@ import { getReplayConsent, REPLAY_CONSENT_EVENT, type ReplayConsent } from "./co
 const REPLAY_ENDPOINT = "/api/replay";
 const FLUSH_INTERVAL_MS = 15000;
 const MAX_BUFFER_SIZE = 300;
+const RETRY_DELAY_MS = 1000;
 
 let stopRecordingFn: (() => void) | null = null;
 let flushTimer: ReturnType<typeof setInterval> | null = null;
+let retryTimer: ReturnType<typeof setTimeout> | null = null;
 let buffer: eventWithTime[] = [];
 let initialized = false;
 
@@ -37,16 +39,25 @@ function send(useBeacon: boolean) {
   })
     .then(async (res) => {
       // The session row (created by /api/track's own flush) may not exist yet —
-      // put the chunk back so it retries next tick instead of losing the full snapshot.
+      // put the chunk back and retry soon rather than waiting for the next natural
+      // trigger (the 15s tick, or worse, the size-capped unload path) to come around.
       const data = res.ok ? await res.json().catch(() => null) : null;
-      if (data?.retry) buffer.unshift(...events);
+      if (data?.retry) {
+        buffer.unshift(...events);
+        if (!retryTimer) {
+          retryTimer = setTimeout(() => {
+            retryTimer = null;
+            send(false);
+          }, RETRY_DELAY_MS);
+        }
+      }
     })
     .catch(() => {});
 }
 
 async function startRecording() {
   if (stopRecordingFn) return;
-  const { record } = await import("rrweb");
+  const { record, EventType } = await import("rrweb");
 
   // maskAllInputs blanks every form field's recorded value — this is a lead-gen
   // site, every input is potentially PII, and replay fidelity doesn't need it.
@@ -54,7 +65,14 @@ async function startRecording() {
     record({
       emit: (event) => {
         buffer.push(event as eventWithTime);
-        if (buffer.length >= MAX_BUFFER_SIZE) send(false);
+        // The FullSnapshot is routinely several hundred KB — much bigger than the
+        // sendBeacon/keepalive-fetch ~64KiB cap used on unload. Left in the buffer
+        // for the normal 15s tick, a quick bounce (common for ad-driven traffic,
+        // e.g. Meta's in-app browser) forces it through that capped path and it
+        // gets silently dropped. Flush it immediately over a plain (uncapped)
+        // fetch instead, while the page is still active.
+        if (event.type === EventType.FullSnapshot) send(false);
+        else if (buffer.length >= MAX_BUFFER_SIZE) send(false);
       },
       maskAllInputs: true,
       sampling: { scroll: 200, mousemoveCallback: 400 },
@@ -69,6 +87,10 @@ function stopRecording() {
   if (flushTimer) {
     clearInterval(flushTimer);
     flushTimer = null;
+  }
+  if (retryTimer) {
+    clearTimeout(retryTimer);
+    retryTimer = null;
   }
   buffer = [];
 }

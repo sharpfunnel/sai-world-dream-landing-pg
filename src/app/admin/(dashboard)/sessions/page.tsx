@@ -13,6 +13,16 @@ function formatDuration(seconds: number | null): string {
   return m > 0 ? `${m}m ${s}s` : `${s}s`;
 }
 
+function formatRelativeTime(date: Date): string {
+  const minutes = Math.floor((Date.now() - date.getTime()) / 60000);
+  if (minutes < 1) return "just now";
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+}
+
 function hostnameOf(url: string): string | null {
   try {
     return new URL(url).hostname;
@@ -70,11 +80,16 @@ export default async function AdminSessionsPage() {
             const signedUp = s.leads.length > 0;
             return (
               <Tr key={s.id}>
-                <Td>{s.startedAt.toLocaleString()}</Td>
-                <Td>{s.visitor.isReturning ? "Returning" : "New"}</Td>
+                <Td title={s.startedAt.toLocaleString()}>{s.startedAt.toLocaleString()}</Td>
+                <Td title={s.startedAt.toLocaleString()}>{formatRelativeTime(s.startedAt)}</Td>
                 <Td className="text-white">
                   {s.visitor.fingerprint.slice(0, 8)}
                   {s.visitor.deviceType ? <span className="ml-1.5 text-neutral-500">· {s.visitor.deviceType}</span> : null}
+                  <span
+                    className={`ml-1.5 text-xs font-medium ${s.visitor.isReturning ? "text-amber-400" : "text-emerald-400"}`}
+                  >
+                    · {s.visitor.isReturning ? "Returning" : "New"}
+                  </span>
                 </Td>
                 <Td>{s.ipAddress ?? "—"}</Td>
                 <Td>{[s.visitor.city, s.visitor.country].filter(Boolean).join(", ") || "—"}</Td>

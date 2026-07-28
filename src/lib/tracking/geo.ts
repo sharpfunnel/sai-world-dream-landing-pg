@@ -1,3 +1,5 @@
+import { geolocation, ipAddress } from "@vercel/functions";
+
 export interface GeoInfo {
   country: string | null;
   region: string | null;
@@ -7,24 +9,27 @@ export interface GeoInfo {
 
 /**
  * Vercel's edge network injects these headers automatically in production.
- * They are absent in local dev, which is fine — fields stay null.
+ * Read via the official `@vercel/functions` helpers rather than hand-parsing header
+ * names — Next.js docs point here now that `NextRequest.geo`/`.ip` were removed in v15,
+ * and it stays correct if Vercel ever changes its header set. Absent in local dev,
+ * which is fine — fields stay null. `timezone` has no official helper, so it's still
+ * read directly off the raw header.
  */
 export function readGeoFromHeaders(headers: Headers): GeoInfo {
-  const city = headers.get("x-vercel-ip-city");
+  const geo = geolocation({ headers });
   return {
-    country: headers.get("x-vercel-ip-country"),
-    region: headers.get("x-vercel-ip-country-region"),
-    city: city ? decodeURIComponent(city) : null,
+    country: geo.country ?? null,
+    region: geo.countryRegion ?? null,
+    city: geo.city ?? null,
     timezone: headers.get("x-vercel-ip-timezone"),
   };
 }
 
 /**
- * `x-forwarded-for` can carry a proxy chain ("client, proxy1, proxy2") —
- * the client's real address is always the first entry. Absent in local dev.
+ * `x-real-ip` is Vercel's canonical client-IP header — `@vercel/functions` reads only
+ * that one (not `x-forwarded-for`, which isn't part of Vercel's guaranteed header set
+ * and was leaving `ipAddress` null for some real requests). Absent in local dev.
  */
 export function readIpFromHeaders(headers: Headers): string | null {
-  const forwardedFor = headers.get("x-forwarded-for");
-  if (forwardedFor) return forwardedFor.split(",")[0].trim();
-  return headers.get("x-real-ip");
+  return ipAddress(headers) ?? null;
 }
