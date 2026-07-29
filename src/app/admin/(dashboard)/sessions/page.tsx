@@ -31,24 +31,6 @@ function hostnameOf(url: string): string | null {
   }
 }
 
-const SEARCH_ENGINE_HOSTS = ["google.", "bing.", "yahoo.", "duckduckgo.", "baidu.", "yandex."];
-
-/** No paid click id, no non-organic utm attribution, and referrer is a known search engine. */
-function isOrganicSearch(s: {
-  utmMedium: string | null;
-  utmSource: string | null;
-  referrer: string | null;
-  gclid: string | null;
-  fbclid: string | null;
-  msclkid: string | null;
-}): boolean {
-  if (s.gclid || s.fbclid || s.msclkid) return false;
-  if (s.utmMedium) return s.utmMedium.toLowerCase() === "organic";
-  if (s.utmSource) return false;
-  const host = s.referrer ? hostnameOf(s.referrer) : null;
-  return host !== null && SEARCH_ENGINE_HOSTS.some((engine) => host.includes(engine));
-}
-
 export default async function AdminSessionsPage() {
   const sessions = await getSessions(100);
 
@@ -69,9 +51,7 @@ export default async function AdminSessionsPage() {
           <Th>Pages</Th>
           <Th>Duration</Th>
           <Th>Bounce</Th>
-          <Th>Keywords</Th>
           <Th>Signed up?</Th>
-          <Th>SERP?</Th>
           <Th>Project?</Th>
           <Th>Replay</Th>
         </Thead>
@@ -99,9 +79,7 @@ export default async function AdminSessionsPage() {
                 <Td className="tabular-nums">{s._count.pageViews}</Td>
                 <Td className="tabular-nums">{formatDuration(s.totalDuration)}</Td>
                 <Td>{s.isBounce ? "Yes" : "No"}</Td>
-                <Td>{s.utmTerm ?? "—"}</Td>
                 <Td>{signedUp ? "Yes" : "No"}</Td>
-                <Td>{isOrganicSearch(s) ? "Yes" : "No"}</Td>
                 <Td>{signedUp ? (s.leads[0].config ?? "—") : "—"}</Td>
                 <Td>
                   {s._count.replayChunks > 0 ? (
