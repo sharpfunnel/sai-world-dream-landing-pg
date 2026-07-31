@@ -48,16 +48,12 @@ export default async function AdminSessionsPage() {
           <Th>Source</Th>
           <Th>Medium</Th>
           <Th>Campaign</Th>
-          <Th>Pages</Th>
           <Th>Duration</Th>
           <Th>Bounce</Th>
-          <Th>Signed up?</Th>
-          <Th>Project?</Th>
           <Th>Replay</Th>
         </Thead>
         <tbody>
           {sessions.map((s) => {
-            const signedUp = s.leads.length > 0;
             return (
               <Tr key={s.id}>
                 <Td title={s.startedAt.toLocaleString()}>{s.startedAt.toLocaleString()}</Td>
@@ -76,11 +72,8 @@ export default async function AdminSessionsPage() {
                 <Td>{s.utmSource ?? (s.referrer ? (hostnameOf(s.referrer) ?? s.referrer) : "Direct")}</Td>
                 <Td>{s.utmMedium ?? "—"}</Td>
                 <Td>{s.utmCampaign ?? "—"}</Td>
-                <Td className="tabular-nums">{s._count.pageViews}</Td>
                 <Td className="tabular-nums">{formatDuration(s.totalDuration)}</Td>
                 <Td>{s.isBounce ? "Yes" : "No"}</Td>
-                <Td>{signedUp ? "Yes" : "No"}</Td>
-                <Td>{signedUp ? (s.leads[0].config ?? "—") : "—"}</Td>
                 <Td>
                   {s._count.replayChunks > 0 ? (
                     <Link
