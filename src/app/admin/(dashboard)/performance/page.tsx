@@ -28,7 +28,7 @@ function formatValue(metric: string, value: number): string {
 function RatingBar({ good, needsImprovement, poor }: { good: number; needsImprovement: number; poor: number }) {
   const total = good + needsImprovement + poor || 1;
   return (
-    <div className="flex h-2 w-40 overflow-hidden rounded-full bg-neutral-800">
+    <div className="flex h-2 w-40 overflow-hidden rounded-full bg-slate-100">
       <div style={{ width: `${(good / total) * 100}%`, backgroundColor: "#0ca30c" }} />
       <div style={{ width: `${(needsImprovement / total) * 100}%`, backgroundColor: "#fab219" }} />
       <div style={{ width: `${(poor / total) * 100}%`, backgroundColor: "#d03b3b" }} />
@@ -53,9 +53,9 @@ export default async function AdminPerformancePage() {
         <tbody>
           {metrics.map((m) => (
             <Tr key={m.metric}>
-              <Td className="text-white">
+              <Td className="text-slate-900">
                 {m.metric}
-                <span className="ml-2 text-xs font-normal text-neutral-500">
+                <span className="ml-2 text-xs font-normal text-slate-500">
                   {METRIC_NAMES[m.metric] ?? ""}
                 </span>
               </Td>
@@ -64,7 +64,7 @@ export default async function AdminPerformancePage() {
               <Td>
                 <div className="flex items-center gap-3">
                   <RatingBar good={m.good} needsImprovement={m.needsImprovement} poor={m.poor} />
-                  <span className="tabular-nums text-xs text-neutral-500">
+                  <span className="tabular-nums text-xs text-slate-500">
                     {m.good}/{m.needsImprovement}/{m.poor}
                   </span>
                 </div>

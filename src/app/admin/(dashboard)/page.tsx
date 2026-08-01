@@ -60,12 +60,12 @@ export default async function AdminOverviewPage() {
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
         <ConversionFunnel stages={funnelStages} />
 
-        <div className="rounded-lg border border-white/10 bg-neutral-900 p-5">
-          <h2 className="mb-4 text-xs font-semibold uppercase tracking-wide text-neutral-500">Traffic sources</h2>
+        <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+          <h2 className="mb-4 text-xs font-semibold uppercase tracking-wide text-slate-500">Traffic sources</h2>
           <div className="overflow-x-auto">
             <table className="w-full min-w-max border-collapse text-sm">
               <thead>
-                <tr className="border-b border-white/10 text-left text-xs font-medium uppercase tracking-wide text-neutral-500">
+                <tr className="border-b border-slate-200 text-left text-xs font-medium uppercase tracking-wide text-slate-500">
                   <th className="whitespace-nowrap py-2 pr-4 font-medium">Source</th>
                   <th className="whitespace-nowrap py-2 pr-4 font-medium">Medium</th>
                   <th className="whitespace-nowrap py-2 pr-4 font-medium">Sessions</th>
@@ -75,17 +75,17 @@ export default async function AdminOverviewPage() {
               </thead>
               <tbody>
                 {trafficSources.map((s) => (
-                  <tr key={`${s.source}-${s.medium}`} className="border-b border-white/5 last:border-0">
-                    <td className="whitespace-nowrap py-2.5 pr-4 text-white">{s.source}</td>
-                    <td className="whitespace-nowrap py-2.5 pr-4 text-neutral-300">{s.medium}</td>
-                    <td className="whitespace-nowrap py-2.5 pr-4 tabular-nums text-neutral-300">{s.sessions}</td>
-                    <td className="whitespace-nowrap py-2.5 pr-4 tabular-nums text-neutral-300">{s.leads}</td>
+                  <tr key={`${s.source}-${s.medium}`} className="border-b border-slate-100 last:border-0">
+                    <td className="whitespace-nowrap py-2.5 pr-4 text-slate-900">{s.source}</td>
+                    <td className="whitespace-nowrap py-2.5 pr-4 text-slate-600">{s.medium}</td>
+                    <td className="whitespace-nowrap py-2.5 pr-4 tabular-nums text-slate-600">{s.sessions}</td>
+                    <td className="whitespace-nowrap py-2.5 pr-4 tabular-nums text-slate-600">{s.leads}</td>
                     <td className="whitespace-nowrap py-2.5 tabular-nums">
                       <span
                         className={`rounded-full px-2 py-0.5 text-xs font-medium ${
                           s.conversionRate > 0
-                            ? "bg-emerald-400/10 text-emerald-300"
-                            : "bg-white/5 text-neutral-500"
+                            ? "bg-emerald-50 text-emerald-700"
+                            : "bg-slate-100 text-slate-500"
                         }`}
                       >
                         {s.conversionRate.toFixed(1)}%
@@ -106,8 +106,8 @@ export default async function AdminOverviewPage() {
 
       <div className="mt-6">
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-white">Recent leads</h2>
-          <Link href="/admin/leads" className="text-xs font-medium text-blue-400 hover:text-blue-300">
+          <h2 className="text-sm font-semibold text-slate-900">Recent leads</h2>
+          <Link href="/admin/leads" className="text-xs font-medium text-blue-600 hover:text-blue-700">
             View all →
           </Link>
         </div>
@@ -121,7 +121,7 @@ export default async function AdminOverviewPage() {
           <tbody>
             {recentLeads.map((l) => (
               <Tr key={l.id}>
-                <Td className="text-white">{l.name ?? "—"}</Td>
+                <Td className="text-slate-900">{l.name ?? "—"}</Td>
                 <Td>{l.config ?? "—"}</Td>
                 <Td>{l.source ?? "—"}</Td>
                 <Td>{l.status}</Td>

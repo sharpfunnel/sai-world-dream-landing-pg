@@ -23,7 +23,7 @@ export default async function AdminCampaignDetailPage({ params }: { params: Prom
 
   return (
     <div>
-      <Link href="/admin/campaigns" className="mb-4 inline-block text-xs font-medium text-blue-400 hover:text-blue-300">
+      <Link href="/admin/campaigns" className="mb-4 inline-block text-xs font-medium text-blue-600 hover:text-blue-700">
         ← All campaigns
       </Link>
       <PageHeader
@@ -34,9 +34,9 @@ export default async function AdminCampaignDetailPage({ params }: { params: Prom
       {campaign.adSets.map((adSet) => (
         <div key={adSet.id} className="mb-6">
           <div className="mb-2 flex items-baseline gap-2">
-            <h2 className="text-sm font-semibold text-white">{adSet.name}</h2>
-            <span className="text-xs text-neutral-500 capitalize">{adSet.status.toLowerCase()}</span>
-            <span className="text-xs text-neutral-500">
+            <h2 className="text-sm font-semibold text-slate-900">{adSet.name}</h2>
+            <span className="text-xs text-slate-500 capitalize">{adSet.status.toLowerCase()}</span>
+            <span className="text-xs text-slate-500">
               · {formatCurrency(adSet.spend, campaign.currency)} spend · {adSet.results} results
             </span>
           </div>
@@ -54,7 +54,7 @@ export default async function AdminCampaignDetailPage({ params }: { params: Prom
             <tbody>
               {adSet.ads.map((ad) => (
                 <Tr key={ad.id}>
-                  <Td className="text-white">{ad.headline || ad.name}</Td>
+                  <Td className="text-slate-900">{ad.headline || ad.name}</Td>
                   <Td className="capitalize">{ad.status.toLowerCase()}</Td>
                   <Td className="tabular-nums">{formatCurrency(ad.spend, campaign.currency)}</Td>
                   <Td className="tabular-nums">{ad.ctr.toFixed(2)}%</Td>

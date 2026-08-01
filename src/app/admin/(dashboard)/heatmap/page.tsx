@@ -36,20 +36,20 @@ export default async function AdminHeatmapPage({
                   key={p}
                   href={`/admin/heatmap?path=${encodeURIComponent(p)}&type=${type}`}
                   className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
-                    p === path ? "bg-white/10 text-white" : "text-neutral-400 hover:bg-white/5 hover:text-neutral-200"
+                    p === path ? "bg-slate-900 text-white" : "text-slate-500 hover:bg-slate-100 hover:text-slate-900"
                   }`}
                 >
                   {p}
                 </Link>
               ))}
             </div>
-            <div className="flex gap-2 border-l border-white/10 pl-4">
+            <div className="flex gap-2 border-l border-slate-200 pl-4">
               {(["click", "hover"] as const).map((t) => (
                 <Link
                   key={t}
                   href={`/admin/heatmap?path=${encodeURIComponent(path)}&type=${t}`}
                   className={`rounded-md px-3 py-1.5 text-xs font-medium capitalize transition-colors ${
-                    t === type ? "bg-white/10 text-white" : "text-neutral-400 hover:bg-white/5 hover:text-neutral-200"
+                    t === type ? "bg-slate-900 text-white" : "text-slate-500 hover:bg-slate-100 hover:text-slate-900"
                   }`}
                 >
                   {t}
@@ -58,7 +58,7 @@ export default async function AdminHeatmapPage({
             </div>
           </div>
 
-          <p className="mb-3 text-xs text-neutral-500">{points.length} points</p>
+          <p className="mb-3 text-xs text-slate-500">{points.length} points</p>
           <HeatmapOverlay key={path} path={path} points={points} color={type === "click" ? "#d03b3b" : "#3987e5"} />
         </>
       )}

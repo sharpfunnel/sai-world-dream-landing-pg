@@ -27,8 +27,8 @@ export default async function AdminLeadsPage({
             href={s === "all" ? "/admin/leads" : `/admin/leads?status=${s}`}
             className={`rounded-md px-3 py-1.5 text-xs font-medium capitalize transition-colors ${
               (status ?? "all") === s
-                ? "bg-white/10 text-white"
-                : "text-neutral-400 hover:bg-white/5 hover:text-neutral-200"
+                ? "bg-slate-900 text-white"
+                : "text-slate-500 hover:bg-slate-100 hover:text-slate-900"
             }`}
           >
             {s}
@@ -51,7 +51,7 @@ export default async function AdminLeadsPage({
         <tbody>
           {leads.map((lead) => (
             <Tr key={lead.id}>
-              <Td className="text-white">{lead.name ?? "—"}</Td>
+              <Td className="text-slate-900">{lead.name ?? "—"}</Td>
               <Td>{lead.phone ?? "—"}</Td>
               <Td>{lead.email ?? "—"}</Td>
               <Td>{lead.config ?? "—"}</Td>
@@ -64,18 +64,18 @@ export default async function AdminLeadsPage({
               <Td>
                 <div className="flex items-center gap-2">
                   {lead.metaCapiSentAt ? (
-                    <span className="rounded-md bg-emerald-500/15 px-2 py-1 text-xs font-medium text-emerald-300">
+                    <span className="rounded-md bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700">
                       Sent
                     </span>
                   ) : lead.metaCapiError ? (
                     <span
-                      className="rounded-md bg-red-500/15 px-2 py-1 text-xs font-medium text-red-300"
+                      className="rounded-md bg-red-50 px-2 py-1 text-xs font-medium text-red-700"
                       title={lead.metaCapiError}
                     >
                       Failed
                     </span>
                   ) : (
-                    <span className="rounded-md bg-neutral-500/15 px-2 py-1 text-xs font-medium text-neutral-400">
+                    <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-500">
                       —
                     </span>
                   )}

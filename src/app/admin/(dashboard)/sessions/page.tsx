@@ -58,11 +58,11 @@ export default async function AdminSessionsPage() {
               <Tr key={s.id}>
                 <Td title={s.startedAt.toLocaleString()}>{s.startedAt.toLocaleString()}</Td>
                 <Td title={s.startedAt.toLocaleString()}>{formatRelativeTime(s.startedAt)}</Td>
-                <Td className="text-white">
+                <Td className="text-slate-900">
                   {s.visitor.fingerprint.slice(0, 8)}
-                  {s.visitor.deviceType ? <span className="ml-1.5 text-neutral-500">· {s.visitor.deviceType}</span> : null}
+                  {s.visitor.deviceType ? <span className="ml-1.5 text-slate-500">· {s.visitor.deviceType}</span> : null}
                   <span
-                    className={`ml-1.5 text-xs font-medium ${s.visitor.isReturning ? "text-amber-400" : "text-emerald-400"}`}
+                    className={`ml-1.5 text-xs font-medium ${s.visitor.isReturning ? "text-amber-600" : "text-emerald-600"}`}
                   >
                     · {s.visitor.isReturning ? "Returning" : "New"}
                   </span>
@@ -78,7 +78,7 @@ export default async function AdminSessionsPage() {
                   {s._count.replayChunks > 0 ? (
                     <Link
                       href={`/admin/sessions/${s.id}/replay`}
-                      className="flex items-center gap-1 text-xs font-medium text-blue-400 hover:text-blue-300"
+                      className="flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700"
                     >
                       <PlayCircle className="h-3.5 w-3.5" strokeWidth={2} />
                       Watch

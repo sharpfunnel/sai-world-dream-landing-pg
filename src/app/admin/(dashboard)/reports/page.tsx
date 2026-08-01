@@ -15,7 +15,7 @@ const RANGE_OPTIONS = [
 
 function pillClass(active: boolean) {
   return `rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
-    active ? "bg-white/10 text-white" : "text-neutral-400 hover:bg-white/5 hover:text-neutral-200"
+    active ? "bg-slate-900 text-white" : "text-slate-500 hover:bg-slate-100 hover:text-slate-900"
   }`;
 }
 
@@ -29,17 +29,17 @@ function ReportCard({
   links: { label: string; href: string }[];
 }) {
   return (
-    <div className="flex flex-col justify-between gap-3 rounded-lg border border-white/10 bg-neutral-900 p-4 sm:flex-row sm:items-center">
+    <div className="flex flex-col justify-between gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center">
       <div>
-        <p className="text-sm font-semibold text-white">{title}</p>
-        <p className="text-xs text-neutral-500">{description}</p>
+        <p className="text-sm font-semibold text-slate-900">{title}</p>
+        <p className="text-xs text-slate-500">{description}</p>
       </div>
       <div className="flex shrink-0 gap-2">
         {links.map((l) => (
           <a
             key={l.label}
             href={l.href}
-            className="rounded-md bg-white/10 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-white/15"
+            className="rounded-md border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50"
           >
             {l.label}
           </a>
@@ -82,15 +82,15 @@ export default async function AdminReportsPage({
             name="from"
             defaultValue={sp.from}
             required
-            className="rounded-md border border-white/10 bg-neutral-900 px-2 py-1.5 text-xs text-white outline-none focus:ring-2 focus:ring-blue-500"
+            className="rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-900 outline-none focus:ring-2 focus:ring-blue-500"
           />
-          <span className="text-xs text-neutral-500">to</span>
+          <span className="text-xs text-slate-500">to</span>
           <input
             type="date"
             name="to"
             defaultValue={sp.to}
             required
-            className="rounded-md border border-white/10 bg-neutral-900 px-2 py-1.5 text-xs text-white outline-none focus:ring-2 focus:ring-blue-500"
+            className="rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-900 outline-none focus:ring-2 focus:ring-blue-500"
           />
           <button type="submit" className={pillClass(range.presetKey === "custom")}>
             Custom
@@ -98,7 +98,7 @@ export default async function AdminReportsPage({
         </form>
       </div>
 
-      <p className="mb-6 text-sm text-neutral-500">{range.label}</p>
+      <p className="mb-6 text-sm text-slate-500">{range.label}</p>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <StatTile label="Visitors" value={overview.visitorCount.toLocaleString()} />

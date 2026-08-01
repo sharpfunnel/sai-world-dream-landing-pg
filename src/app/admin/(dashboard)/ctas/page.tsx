@@ -22,7 +22,7 @@ export default async function AdminCtasPage() {
         <tbody>
           {ctas.map((c) => (
             <Tr key={c.ctaId}>
-              <Td className="text-white">{c.ctaId}</Td>
+              <Td className="text-slate-900">{c.ctaId}</Td>
               <Td className="tabular-nums">{c.viewed}</Td>
               <Td className="tabular-nums">{c.hovered}</Td>
               <Td className="tabular-nums">{c.clicked}</Td>

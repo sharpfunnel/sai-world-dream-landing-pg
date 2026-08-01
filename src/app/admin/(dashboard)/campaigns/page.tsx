@@ -19,10 +19,10 @@ function formatCurrency(value: number, currency?: string | null): string {
 }
 
 const STATUS_STYLES: Record<string, string> = {
-  ACTIVE: "bg-emerald-500/15 text-emerald-300",
-  PAUSED: "bg-yellow-500/15 text-yellow-300",
-  ARCHIVED: "bg-neutral-500/15 text-neutral-400",
-  DELETED: "bg-neutral-500/15 text-neutral-400",
+  ACTIVE: "bg-emerald-50 text-emerald-700",
+  PAUSED: "bg-yellow-50 text-yellow-700",
+  ARCHIVED: "bg-slate-100 text-slate-500",
+  DELETED: "bg-slate-100 text-slate-500",
 };
 
 export default async function AdminCampaignsPage({
@@ -44,20 +44,20 @@ export default async function AdminCampaignsPage({
       <PageHeader title="Campaigns" description="Meta Ads performance — last 30 days" />
 
       {meta_error && (
-        <div className="mb-4 rounded-md border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+        <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           Couldn&apos;t connect Meta: {meta_error}
         </div>
       )}
       {connected !== undefined && !meta_error && (
-        <div className="mb-4 rounded-md border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300">
+        <div className="mb-4 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
           Connected {connected} ad account{connected === "1" ? "" : "s"}. Syncing runs every 15 minutes — click
           &quot;Sync now&quot; below to pull data immediately.
         </div>
       )}
 
-      <div className="mb-6 rounded-lg border border-white/10 bg-neutral-900 p-4">
+      <div className="mb-6 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-white">Meta Business connection</h2>
+          <h2 className="text-sm font-semibold text-slate-900">Meta Business connection</h2>
           <div className="flex items-center gap-2">
             {hasActiveAccount && <MetaSyncButton />}
             <a
@@ -70,7 +70,7 @@ export default async function AdminCampaignsPage({
         </div>
 
         {accounts.length === 0 ? (
-          <p className="text-sm text-neutral-500">
+          <p className="text-sm text-slate-500">
             No ad accounts connected yet. Connect Meta Business to sync campaigns, spend, and results into this
             dashboard.
           </p>
@@ -79,16 +79,16 @@ export default async function AdminCampaignsPage({
             {accounts.map((account) => (
               <div
                 key={account.id}
-                className="flex items-center justify-between rounded-md border border-white/5 px-3 py-2"
+                className="flex items-center justify-between rounded-md border border-slate-200 px-3 py-2"
               >
                 <div>
-                  <p className="text-sm font-medium text-white">{account.name ?? account.accountId}</p>
-                  <p className="text-xs text-neutral-500">
+                  <p className="text-sm font-medium text-slate-900">{account.name ?? account.accountId}</p>
+                  <p className="text-xs text-slate-500">
                     {account.accountId} · {account.currency ?? "—"}
                     {!account.accessToken && " · disconnected"}
                     {account.lastSyncedAt && ` · last synced ${account.lastSyncedAt.toLocaleString()}`}
                     {account.lastSyncError && account.accessToken && (
-                      <span className="text-red-400"> · {account.lastSyncError}</span>
+                      <span className="text-red-600"> · {account.lastSyncError}</span>
                     )}
                   </p>
                 </div>
@@ -111,7 +111,7 @@ export default async function AdminCampaignsPage({
       </div>
 
       <div className="mt-6">
-        <h2 className="mb-3 text-sm font-semibold text-white">Campaigns</h2>
+        <h2 className="mb-3 text-sm font-semibold text-slate-900">Campaigns</h2>
         <Table>
           <Thead>
             <Th>Campaign</Th>
@@ -134,7 +134,7 @@ export default async function AdminCampaignsPage({
           <tbody>
             {campaigns.map((c) => (
               <Tr key={c.id}>
-                <Td className="text-white">
+                <Td className="text-slate-900">
                   <Link href={`/admin/campaigns/${c.id}`} className="hover:underline">
                     {c.name}
                   </Link>
@@ -168,7 +168,7 @@ export default async function AdminCampaignsPage({
         </Table>
         {campaigns.length === 0 && <EmptyState message="No campaign data synced yet." />}
         {campaigns.length > 0 && (
-          <p className="mt-2 text-xs text-neutral-500">
+          <p className="mt-2 text-xs text-slate-500">
             Sessions/scroll/CTA/form/lead columns match site visits by <code>utm_campaign</code> = campaign name — set
             that as a dynamic URL parameter in Meta Ads Manager for these to populate.
           </p>

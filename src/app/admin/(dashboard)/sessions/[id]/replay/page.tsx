@@ -16,7 +16,7 @@ export default async function AdminSessionReplayPage({ params }: { params: Promi
 
   return (
     <div>
-      <Link href="/admin/sessions" className="mb-4 inline-block text-xs font-medium text-blue-400 hover:text-blue-300">
+      <Link href="/admin/sessions" className="mb-4 inline-block text-xs font-medium text-blue-600 hover:text-blue-700">
         ← All sessions
       </Link>
       <PageHeader

@@ -15,7 +15,7 @@ export function MetaDisconnectButton({ accountId }: { accountId: string }) {
           startTransition(() => disconnectMetaAdAccount(accountId));
         }
       }}
-      className="rounded-md px-3 py-1.5 text-xs font-medium text-neutral-400 transition-colors hover:bg-white/5 hover:text-red-300 disabled:opacity-50"
+      className="rounded-md px-3 py-1.5 text-xs font-medium text-slate-500 transition-colors hover:bg-slate-100 hover:text-red-600 disabled:opacity-50"
     >
       {pending ? "Disconnecting…" : "Disconnect"}
     </button>

@@ -5,11 +5,11 @@ import { updateLeadStatus } from "@/lib/admin/actions";
 import { LEAD_STATUSES } from "@/lib/admin/constants";
 
 const STATUS_STYLES: Record<string, string> = {
-  new: "bg-blue-500/15 text-blue-300",
-  contacted: "bg-yellow-500/15 text-yellow-300",
-  qualified: "bg-violet-500/15 text-violet-300",
-  won: "bg-emerald-500/15 text-emerald-300",
-  lost: "bg-neutral-500/15 text-neutral-400",
+  new: "bg-blue-50 text-blue-700",
+  contacted: "bg-yellow-50 text-yellow-700",
+  qualified: "bg-violet-50 text-violet-700",
+  won: "bg-emerald-50 text-emerald-700",
+  lost: "bg-slate-100 text-slate-500",
 };
 
 export function LeadStatusSelect({ leadId, status }: { leadId: string; status: string }) {
@@ -25,7 +25,7 @@ export function LeadStatusSelect({ leadId, status }: { leadId: string; status: s
       }`}
     >
       {LEAD_STATUSES.map((s) => (
-        <option key={s} value={s} className="bg-neutral-900 text-white">
+        <option key={s} value={s} className="bg-white text-slate-900">
           {s}
         </option>
       ))}

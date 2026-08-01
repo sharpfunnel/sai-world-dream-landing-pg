@@ -28,7 +28,7 @@ export default async function AdminFunnelsPage({
             key={s}
             href={s === "all" ? "/admin/funnels" : "/admin/funnels?source=meta"}
             className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
-              activeSource === s ? "bg-white/10 text-white" : "text-neutral-400 hover:bg-white/5 hover:text-neutral-200"
+              activeSource === s ? "bg-slate-900 text-white" : "text-slate-500 hover:bg-slate-100 hover:text-slate-900"
             }`}
           >
             {s === "all" ? "All traffic" : "Meta ads traffic"}
@@ -41,19 +41,19 @@ export default async function AdminFunnelsPage({
       ) : (
         <div className="space-y-3">
           {stages.map((stage) => (
-            <div key={stage.key} className="rounded-lg border border-white/10 bg-neutral-900 p-4">
+            <div key={stage.key} className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
               <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 text-sm">
-                <span className="font-medium text-white">{stage.label}</span>
-                <span className="text-neutral-400">
-                  <span className="tabular-nums text-white">{stage.count.toLocaleString()}</span>
+                <span className="font-medium text-slate-900">{stage.label}</span>
+                <span className="text-slate-500">
+                  <span className="tabular-nums text-slate-900">{stage.count.toLocaleString()}</span>
                   {" · "}
                   {stage.conversionFromStart}% of start
                   {stage.dropOffFromPrev > 0 && (
-                    <span className="text-red-400"> · -{stage.dropOffFromPrev}% drop-off</span>
+                    <span className="text-red-600"> · -{stage.dropOffFromPrev}% drop-off</span>
                   )}
                 </span>
               </div>
-              <div className="h-2 overflow-hidden rounded-full bg-white/5">
+              <div className="h-2 overflow-hidden rounded-full bg-slate-100">
                 <div
                   className="h-full rounded-full bg-blue-500"
                   style={{ width: `${(stage.count / maxCount) * 100}%` }}
@@ -65,9 +65,9 @@ export default async function AdminFunnelsPage({
       )}
 
       {activeSource === "meta" && stages[0]?.key !== "adClicks" && (
-        <p className="mt-4 text-xs text-neutral-500">
+        <p className="mt-4 text-xs text-slate-500">
           Connect a Meta ad account on the{" "}
-          <Link href="/admin/campaigns" className="text-blue-400 hover:text-blue-300">
+          <Link href="/admin/campaigns" className="text-blue-600 hover:text-blue-700">
             Campaigns
           </Link>{" "}
           page to see the &quot;Ad clicks&quot; stage sourced from Meta&apos;s own reporting.

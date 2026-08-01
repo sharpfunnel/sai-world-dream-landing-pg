@@ -57,7 +57,7 @@ export function HeatmapOverlay({
   return (
     <div
       ref={containerRef}
-      className="relative w-full max-w-3xl overflow-hidden rounded-lg border border-white/10 bg-neutral-900"
+      className="relative w-full max-w-3xl overflow-hidden rounded-lg border border-slate-200 bg-slate-100"
       style={{ height: contentHeight * scale }}
     >
       <div

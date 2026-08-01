@@ -34,5 +34,5 @@ export function ReplayPlayer({ events }: { events: eventWithTime[] }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return <div ref={containerRef} className="overflow-hidden rounded-lg border border-white/10 bg-neutral-900" />;
+  return <div ref={containerRef} className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm" />;
 }

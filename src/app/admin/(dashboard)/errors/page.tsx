@@ -5,9 +5,9 @@ import { getErrors } from "@/lib/admin/queries";
 export const dynamic = "force-dynamic";
 
 const TYPE_STYLES: Record<string, string> = {
-  js: "bg-red-500/15 text-red-300",
-  unhandled_rejection: "bg-orange-500/15 text-orange-300",
-  image_load: "bg-yellow-500/15 text-yellow-300",
+  js: "bg-red-50 text-red-700",
+  unhandled_rejection: "bg-orange-50 text-orange-700",
+  image_load: "bg-yellow-50 text-yellow-700",
 };
 
 export default async function AdminErrorsPage() {
@@ -29,11 +29,11 @@ export default async function AdminErrorsPage() {
             <Tr key={e.id}>
               <Td>{e.createdAt.toLocaleString()}</Td>
               <Td>
-                <span className={`rounded-md px-2 py-1 text-xs font-medium ${TYPE_STYLES[e.type] ?? "bg-neutral-500/15 text-neutral-400"}`}>
+                <span className={`rounded-md px-2 py-1 text-xs font-medium ${TYPE_STYLES[e.type] ?? "bg-slate-100 text-slate-500"}`}>
                   {e.type}
                 </span>
               </Td>
-              <Td className="max-w-md truncate text-white" title={e.message}>
+              <Td className="max-w-md truncate text-slate-900" title={e.message}>
                 {e.message}
               </Td>
               <Td>{e.path ?? "—"}</Td>

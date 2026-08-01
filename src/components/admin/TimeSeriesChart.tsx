@@ -52,10 +52,10 @@ export function TimeSeriesChart({ data }: { data: DailyPoint[] }) {
   const hovered = hoverIndex !== null ? data[hoverIndex] : null;
 
   return (
-    <div className="rounded-lg border border-white/10 bg-neutral-900 p-4">
+    <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
       <div className="mb-3 flex items-center gap-4">
         {SERIES.map((s) => (
-          <div key={s.key} className="flex items-center gap-1.5 text-xs text-neutral-400">
+          <div key={s.key} className="flex items-center gap-1.5 text-xs text-slate-500">
             <span className="h-2 w-2 rounded-full" style={{ backgroundColor: s.color }} />
             {s.label}
           </div>
@@ -79,8 +79,8 @@ export function TimeSeriesChart({ data }: { data: DailyPoint[] }) {
           const y = PAD_TOP + (HEIGHT - PAD_TOP - PAD_BOTTOM) * (1 - g);
           return (
             <g key={g}>
-              <line x1={PAD_LEFT} x2={WIDTH - PAD_RIGHT} y1={y} y2={y} stroke="#2c2c2a" strokeWidth={1} />
-              <text x={PAD_LEFT - 8} y={y + 3} textAnchor="end" fontSize={10} fill="#898781">
+              <line x1={PAD_LEFT} x2={WIDTH - PAD_RIGHT} y1={y} y2={y} stroke="#e2e8f0" strokeWidth={1} />
+              <text x={PAD_LEFT - 8} y={y + 3} textAnchor="end" fontSize={10} fill="#64748b">
                 {Math.round(maxValue * g)}
               </text>
             </g>
@@ -91,7 +91,7 @@ export function TimeSeriesChart({ data }: { data: DailyPoint[] }) {
           if (data.length > 10 && i % Math.ceil(data.length / 8) !== 0) return null;
           const x = PAD_LEFT + step * i;
           return (
-            <text key={d.date} x={x} y={HEIGHT - 8} textAnchor="middle" fontSize={10} fill="#898781">
+            <text key={d.date} x={x} y={HEIGHT - 8} textAnchor="middle" fontSize={10} fill="#64748b">
               {d.date.slice(5)}
             </text>
           );
@@ -115,7 +115,7 @@ export function TimeSeriesChart({ data }: { data: DailyPoint[] }) {
             x2={PAD_LEFT + step * hoverIndex}
             y1={PAD_TOP}
             y2={HEIGHT - PAD_BOTTOM}
-            stroke="#52514e"
+            stroke="#cbd5e1"
             strokeWidth={1}
           />
         )}
@@ -124,13 +124,13 @@ export function TimeSeriesChart({ data }: { data: DailyPoint[] }) {
           points.map((s) => {
             const c = s.coords[hoverIndex];
             return (
-              <circle key={s.key} cx={c.x} cy={c.y} r={4} fill={s.color} stroke="#1a1a19" strokeWidth={2} />
+              <circle key={s.key} cx={c.x} cy={c.y} r={4} fill={s.color} stroke="#ffffff" strokeWidth={2} />
             );
           })}
       </svg>
 
       {hovered && (
-        <div className="mt-2 flex items-center gap-4 rounded-md bg-neutral-800 px-3 py-2 text-xs text-neutral-300">
+        <div className="mt-2 flex items-center gap-4 rounded-md bg-slate-900 px-3 py-2 text-xs text-slate-300">
           <span className="font-medium text-white">{hovered.date}</span>
           {SERIES.map((s) => (
             <span key={s.key} className="flex items-center gap-1.5">

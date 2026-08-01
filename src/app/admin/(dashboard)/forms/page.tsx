@@ -24,7 +24,7 @@ export default async function AdminFormsPage() {
         <tbody>
           {forms.map((f) => (
             <Tr key={f.formId}>
-              <Td className="text-white">{f.formId}</Td>
+              <Td className="text-slate-900">{f.formId}</Td>
               <Td className="tabular-nums">{f.viewed}</Td>
               <Td className="tabular-nums">{f.started}</Td>
               <Td className="tabular-nums">{f.submitted}</Td>
