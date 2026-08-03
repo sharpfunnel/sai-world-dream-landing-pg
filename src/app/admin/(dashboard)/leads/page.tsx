@@ -8,6 +8,13 @@ import { LEAD_STATUSES } from "@/lib/admin/constants";
 
 export const dynamic = "force-dynamic";
 
+function rawParamsTitle(raw: unknown): string | undefined {
+  if (!raw || typeof raw !== "object") return undefined;
+  const entries = Object.entries(raw as Record<string, string>);
+  if (entries.length === 0) return undefined;
+  return entries.map(([k, v]) => `${k}=${v}`).join("\n");
+}
+
 export default async function AdminLeadsPage({
   searchParams,
 }: {
@@ -56,7 +63,22 @@ export default async function AdminLeadsPage({
               <Td>{lead.email ?? "—"}</Td>
               <Td>{lead.config ?? "—"}</Td>
               <Td>{lead.budget ?? "—"}</Td>
-              <Td>{lead.source ?? "—"}</Td>
+              <Td title={rawParamsTitle(lead.session?.rawParams)}>
+                {lead.source ?? "—"}
+                {lead.session?.utmMedium && (
+                  <div className="mt-0.5 text-xs text-slate-400">
+                    {lead.session.utmMedium}
+                    {lead.session.utmCampaign && ` · ${lead.session.utmCampaign}`}
+                  </div>
+                )}
+                {(lead.session?.utmContent || lead.session?.utmTerm) && (
+                  <div className="text-xs text-slate-400">
+                    {lead.session.utmContent && `ad: ${lead.session.utmContent}`}
+                    {lead.session.utmContent && lead.session.utmTerm && " · "}
+                    {lead.session.utmTerm && `adset: ${lead.session.utmTerm}`}
+                  </div>
+                )}
+              </Td>
               <Td>
                 <LeadStatusSelect leadId={lead.id} status={lead.status} />
               </Td>

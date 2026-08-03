@@ -29,6 +29,7 @@ interface SessionContext {
   meta: SessionMeta;
   isNew: boolean;
   utm: Record<string, string | undefined>;
+  rawParams?: Record<string, string>;
   referrer?: string;
 }
 
@@ -70,7 +71,19 @@ function readUtm(): Record<string, string | undefined> {
     gclid: params.get("gclid") ?? undefined,
     fbclid: params.get("fbclid") ?? undefined,
     msclkid: params.get("msclkid") ?? undefined,
+    placement: params.get("placement") ?? undefined,
+    metaCampaignId: params.get("campaign_id") ?? undefined,
+    metaAdsetId: params.get("adset_id") ?? undefined,
+    metaAdId: params.get("ad_id") ?? undefined,
   };
+}
+
+/** Every query param on the landing URL, verbatim — a catch-all so no acquisition
+ *  signal is lost even if it isn't one of the named fields readUtm() extracts. */
+function readRawParams(): Record<string, string> | undefined {
+  const params = new URLSearchParams(window.location.search);
+  const entries = Object.fromEntries(params.entries());
+  return Object.keys(entries).length ? entries : undefined;
 }
 
 export function getSession(): SessionContext {
@@ -94,7 +107,13 @@ export function getSession(): SessionContext {
   } catch {
     // ignore
   }
-  return { meta, isNew: true, utm: readUtm(), referrer: document.referrer || undefined };
+  return {
+    meta,
+    isNew: true,
+    utm: readUtm(),
+    rawParams: readRawParams(),
+    referrer: document.referrer || undefined,
+  };
 }
 
 function buildSessionPayload(session: SessionContext) {
@@ -103,6 +122,7 @@ function buildSessionPayload(session: SessionContext) {
     isNew: session.isNew,
     referrer: session.referrer,
     ...session.utm,
+    rawParams: session.rawParams,
     viewportWidth: window.innerWidth,
     viewportHeight: window.innerHeight,
     screenWidth: window.screen?.width,

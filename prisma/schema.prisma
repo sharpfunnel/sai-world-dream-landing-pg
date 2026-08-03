@@ -61,6 +61,11 @@ model Session {
   gclid         String?
   fbclid        String?
   msclkid       String?
+  placement     String?
+  metaCampaignId String?
+  metaAdsetId   String?
+  metaAdId      String?
+  rawParams     Json?
   ipAddress     String?
   viewportWidth Int?
   viewportHeight Int?
@@ -79,6 +84,7 @@ model Session {
   @@index([visitorId])
   @@index([startedAt])
   @@index([utmSource, utmMedium, utmCampaign])
+  @@index([metaCampaignId])
 }
 
 model PageView {

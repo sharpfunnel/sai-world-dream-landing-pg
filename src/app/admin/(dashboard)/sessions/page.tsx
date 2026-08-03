@@ -31,6 +31,16 @@ function hostnameOf(url: string): string | null {
   }
 }
 
+function formatRawParams(raw: unknown): { preview: string; full: string } | null {
+  if (!raw || typeof raw !== "object") return null;
+  const entries = Object.entries(raw as Record<string, string>);
+  if (entries.length === 0) return null;
+  return {
+    preview: `${entries.length} param${entries.length === 1 ? "" : "s"}`,
+    full: entries.map(([k, v]) => `${k}=${v}`).join("\n"),
+  };
+}
+
 export default async function AdminSessionsPage() {
   const sessions = await getSessions(100);
 
@@ -48,12 +58,14 @@ export default async function AdminSessionsPage() {
           <Th>Source</Th>
           <Th>Medium</Th>
           <Th>Campaign</Th>
+          <Th>Params</Th>
           <Th>Duration</Th>
           <Th>Bounce</Th>
           <Th>Replay</Th>
         </Thead>
         <tbody>
           {sessions.map((s) => {
+            const rawParams = formatRawParams(s.rawParams);
             return (
               <Tr key={s.id}>
                 <Td title={s.startedAt.toLocaleString()}>{s.startedAt.toLocaleString()}</Td>
@@ -72,6 +84,9 @@ export default async function AdminSessionsPage() {
                 <Td>{s.utmSource ?? (s.referrer ? (hostnameOf(s.referrer) ?? s.referrer) : "Direct")}</Td>
                 <Td>{s.utmMedium ?? "—"}</Td>
                 <Td>{s.utmCampaign ?? "—"}</Td>
+                <Td className="text-xs text-slate-400" title={rawParams?.full}>
+                  {rawParams?.preview ?? "—"}
+                </Td>
                 <Td className="tabular-nums">{formatDuration(s.totalDuration)}</Td>
                 <Td>{s.isBounce ? "Yes" : "No"}</Td>
                 <Td>

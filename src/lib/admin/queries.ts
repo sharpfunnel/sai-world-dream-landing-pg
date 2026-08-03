@@ -137,6 +137,19 @@ export async function getLeads(status?: string, limit = 200) {
     where: status && status !== "all" ? { status } : undefined,
     orderBy: { createdAt: "desc" },
     take: limit,
+    include: {
+      session: {
+        select: {
+          utmSource: true,
+          utmMedium: true,
+          utmCampaign: true,
+          utmContent: true,
+          utmTerm: true,
+          placement: true,
+          rawParams: true,
+        },
+      },
+    },
   });
 }
 
@@ -300,11 +313,19 @@ export async function getMetaSummaryStats(days = 30) {
   };
 }
 
-// Site-behavior columns are matched against a campaign by exact (case-insensitive)
-// utm_campaign = campaign name — the standard "utm_campaign={{campaign.name}}" dynamic
-// URL parameter in Meta Ads Manager. Campaigns without that tagging show zeros here.
-async function getCampaignBehaviorStats(campaignName: string, since: Date) {
-  const where = { startedAt: { gte: since }, utmCampaign: { equals: campaignName, mode: "insensitive" as const } };
+// Site-behavior columns are matched against a campaign primarily by Meta's stable
+// campaign_id (persisted as Session.metaCampaignId when the ad's URL is tagged with
+// Meta's {{campaign.id}} dynamic parameter) — a campaign rename in Ads Manager can't
+// break this join. Falls back to exact (case-insensitive) utm_campaign = campaign name
+// for older sessions captured before campaign_id tagging was added.
+async function getCampaignBehaviorStats(campaignMetaId: string, campaignName: string, since: Date) {
+  const where = {
+    startedAt: { gte: since },
+    OR: [
+      { metaCampaignId: campaignMetaId },
+      { utmCampaign: { equals: campaignName, mode: "insensitive" as const } },
+    ],
+  };
   const [sessions, scrolled, ctaClicked, formStarted, leads] = await Promise.all([
     prisma.session.count({ where }),
     prisma.session.count({ where: { ...where, scrollEvents: { some: { depth: { gte: 25 } } } } }),
@@ -332,7 +353,7 @@ export async function getCampaignPerformance(days = 30) {
       const clicks = c.insights.reduce((sum, i) => sum + i.clicks, 0);
       const reach = c.insights.reduce((sum, i) => sum + i.reach, 0);
       const results = c.insights.reduce((sum, i) => sum + i.results, 0);
-      const behavior = await getCampaignBehaviorStats(c.name, since);
+      const behavior = await getCampaignBehaviorStats(c.metaId, c.name, since);
 
       return {
         id: c.id,

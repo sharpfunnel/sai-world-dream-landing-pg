@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import type { InputJsonValue } from "@prisma/client/runtime/client";
 import { readGeoFromHeaders } from "./geo";
 import { parseUserAgent } from "./parseUserAgent";
 import type { Visitor, Session } from "@/generated/prisma/client";
@@ -14,6 +15,11 @@ export interface SessionIdentity {
   gclid?: string;
   fbclid?: string;
   msclkid?: string;
+  placement?: string;
+  metaCampaignId?: string;
+  metaAdsetId?: string;
+  metaAdId?: string;
+  rawParams?: Record<string, string>;
   viewportWidth?: number;
   viewportHeight?: number;
   screenWidth?: number;
@@ -78,6 +84,13 @@ export async function findOrCreateSession(
       gclid: session.gclid,
       fbclid: session.fbclid,
       msclkid: session.msclkid,
+      placement: session.placement,
+      metaCampaignId: session.metaCampaignId,
+      metaAdsetId: session.metaAdsetId,
+      metaAdId: session.metaAdId,
+      rawParams: session.rawParams && Object.keys(session.rawParams).length
+        ? (session.rawParams as InputJsonValue)
+        : undefined,
       ipAddress,
       viewportWidth: session.viewportWidth,
       viewportHeight: session.viewportHeight,
