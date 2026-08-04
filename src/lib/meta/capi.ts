@@ -57,14 +57,11 @@ export interface CapiRequestInfo {
   sourceUrl: string | null;
 }
 
-export async function sendLeadConversionEvent(lead: Lead, session: Session, requestInfo: CapiRequestInfo): Promise<void> {
-  const credentials = await getCapiCredentials();
-  if (!credentials) return;
-
+function buildUserData(lead: Lead, session: Session, requestInfo: CapiRequestInfo) {
   const emailHash = hashEmail(lead.email);
   const phoneHash = hashPhone(lead.phone);
 
-  const userData = {
+  return {
     em: emailHash ? [emailHash] : undefined,
     ph: phoneHash ? [phoneHash] : undefined,
     external_id: [sha256(lead.visitorId)],
@@ -72,6 +69,11 @@ export async function sendLeadConversionEvent(lead: Lead, session: Session, requ
     client_user_agent: requestInfo.userAgent ?? undefined,
     fbc: buildFbc(session.fbclid, session.startedAt),
   };
+}
+
+export async function sendLeadConversionEvent(lead: Lead, session: Session, requestInfo: CapiRequestInfo): Promise<void> {
+  const credentials = await getCapiCredentials();
+  if (!credentials) return;
 
   const body = {
     data: [
@@ -81,7 +83,7 @@ export async function sendLeadConversionEvent(lead: Lead, session: Session, requ
         event_id: lead.id,
         action_source: "website",
         event_source_url: requestInfo.sourceUrl ?? undefined,
-        user_data: userData,
+        user_data: buildUserData(lead, session, requestInfo),
         custom_data: {
           content_name: lead.config ?? undefined,
           lead_source: lead.source ?? undefined,
@@ -107,5 +109,91 @@ export async function sendLeadConversionEvent(lead: Lead, session: Session, requ
     const message = error instanceof Error ? error.message : "Unknown CAPI error";
     console.error("[meta-capi] failed to send Lead event", error);
     await prisma.lead.update({ where: { id: lead.id }, data: { metaCapiError: message } });
+  }
+}
+
+export const CAPI_EVENT_TYPES = [
+  "Purchase",
+  "Lead",
+  "Subscribe",
+  "CompleteRegistration",
+  "StartTrial",
+  "Custom",
+] as const;
+
+export type CapiEventType = (typeof CAPI_EVENT_TYPES)[number];
+
+export interface ManualCapiOptions {
+  eventName: CapiEventType;
+  customEventName?: string;
+  value?: number;
+  currency?: string;
+  orderId?: string;
+}
+
+export interface ManualCapiResult {
+  ok: boolean;
+  eventId?: string;
+  error?: string;
+}
+
+export async function sendManualConversionEvent(
+  lead: Lead,
+  session: Session,
+  requestInfo: CapiRequestInfo,
+  options: ManualCapiOptions,
+): Promise<ManualCapiResult> {
+  const credentials = await getCapiCredentials();
+  const resolvedEventName = options.eventName === "Custom" ? (options.customEventName?.trim() || "Custom") : options.eventName;
+  const eventId = options.orderId?.trim() || `${resolvedEventName}_${lead.id}_${Date.now()}`;
+
+  if (!credentials) {
+    // No pixel/token set up yet: let local dev preview the send flow's success UI instead
+    // of always hitting the config error, without touching the lead's real CAPI status.
+    if (process.env.NODE_ENV !== "production") {
+      return { ok: true, eventId: `evt_preview_${eventId}` };
+    }
+    return { ok: false, error: "Meta CAPI is not configured (missing pixel ID or access token)." };
+  }
+
+  const body = {
+    data: [
+      {
+        event_name: resolvedEventName,
+        event_time: Math.floor(Date.now() / 1000),
+        event_id: eventId,
+        action_source: "website",
+        event_source_url: requestInfo.sourceUrl ?? undefined,
+        user_data: buildUserData(lead, session, requestInfo),
+        custom_data: {
+          content_name: lead.config ?? undefined,
+          lead_source: lead.source ?? undefined,
+          value: options.value,
+          currency: options.value !== undefined ? options.currency ?? "INR" : undefined,
+          order_id: options.orderId?.trim() || undefined,
+        },
+      },
+    ],
+    access_token: credentials.accessToken,
+    ...(process.env.META_CAPI_TEST_EVENT_CODE ? { test_event_code: process.env.META_CAPI_TEST_EVENT_CODE } : {}),
+  };
+
+  try {
+    const res = await fetch(`https://graph.facebook.com/${GRAPH_VERSION}/${credentials.pixelId}/events`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const json = (await res.json().catch(() => null)) as { error?: { message?: string } } | null;
+    if (!res.ok) {
+      throw new Error(json?.error?.message ?? `Meta CAPI request failed (${res.status})`);
+    }
+    await prisma.lead.update({ where: { id: lead.id }, data: { metaCapiSentAt: new Date(), metaCapiError: null } });
+    return { ok: true, eventId };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown CAPI error";
+    console.error("[meta-capi] failed to send manual event", error);
+    await prisma.lead.update({ where: { id: lead.id }, data: { metaCapiError: message } });
+    return { ok: false, error: message };
   }
 }

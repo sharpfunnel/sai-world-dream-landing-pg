@@ -2,7 +2,7 @@ import Link from "next/link";
 import { PageHeader } from "@/components/admin/PageHeader";
 import { Table, Thead, Th, Tr, Td, EmptyState } from "@/components/admin/Table";
 import { LeadStatusSelect } from "@/components/admin/LeadStatusSelect";
-import { ResendCapiButton } from "@/components/admin/ResendCapiButton";
+import { SendCapiModal } from "@/components/admin/SendCapiModal";
 import { getLeads } from "@/lib/admin/queries";
 import { LEAD_STATUSES } from "@/lib/admin/constants";
 
@@ -101,7 +101,16 @@ export default async function AdminLeadsPage({
                       —
                     </span>
                   )}
-                  <ResendCapiButton leadId={lead.id} />
+                  <SendCapiModal
+                    lead={{
+                      id: lead.id,
+                      name: lead.name,
+                      city: lead.visitor?.city ?? null,
+                      country: lead.visitor?.country ?? null,
+                      adId: lead.session?.metaAdId ?? lead.session?.utmContent ?? null,
+                      placement: lead.session?.placement ?? null,
+                    }}
+                  />
                 </div>
               </Td>
             </Tr>

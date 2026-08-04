@@ -146,7 +146,14 @@ export async function getLeads(status?: string, limit = 200) {
           utmContent: true,
           utmTerm: true,
           placement: true,
+          metaAdId: true,
           rawParams: true,
+        },
+      },
+      visitor: {
+        select: {
+          city: true,
+          country: true,
         },
       },
     },
