@@ -10,6 +10,7 @@ import type {
   ScrollEventPayload,
   TrackedEvent,
 } from "./types";
+import { trackPixelLead } from "@/lib/meta/pixel";
 
 const VISITOR_STORAGE_KEY = "aa_vid";
 const SESSION_STORAGE_KEY = "aa_sid";
@@ -178,21 +179,31 @@ export interface LeadFields {
  * (native app switch on mobile), which can background or tear down the page before
  * a plain fetch finishes — so this prefers sendBeacon (survives that handoff) and
  * falls back to a keepalive fetch, mirroring the reliable-delivery pattern in send().
+ *
+ * sendBeacon has no response body, so the lead id can't come back from the server —
+ * it's generated here instead and sent as `leadId` for the API route to use as the
+ * row's primary key. That lets the Meta pixel's `Lead` event fire immediately with
+ * the same id the server-side CAPI event will use, which is what lets Meta dedup them.
  */
 export async function submitLead(formId: string, fields: LeadFields): Promise<boolean> {
   if (typeof window === "undefined") return false;
   const visitor = getOrCreateVisitorId();
   const session = getSession();
+  const leadId = uuid();
   const payload = {
     visitorId: visitor.id,
     session: buildSessionPayload(session),
     formId,
+    leadId,
     ...fields,
   };
 
   if (navigator.sendBeacon) {
     const blob = new Blob([JSON.stringify(payload)], { type: "application/json" });
-    if (navigator.sendBeacon(LEADS_ENDPOINT, blob)) return true;
+    if (navigator.sendBeacon(LEADS_ENDPOINT, blob)) {
+      trackPixelLead(leadId);
+      return true;
+    }
   }
 
   try {
@@ -202,6 +213,7 @@ export async function submitLead(formId: string, fields: LeadFields): Promise<bo
       body: JSON.stringify(payload),
       keepalive: true,
     });
+    if (res.ok) trackPixelLead(leadId);
     return res.ok;
   } catch {
     return false;

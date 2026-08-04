@@ -67,6 +67,8 @@ model Session {
   metaAdId      String?
   rawParams     Json?
   ipAddress     String?
+  fbc           String?
+  fbp           String?
   viewportWidth Int?
   viewportHeight Int?
   pageViews     PageView[]

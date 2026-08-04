@@ -66,7 +66,8 @@ export async function findOrCreateSession(
   visitorId: string,
   session: SessionIdentity,
   entryPath?: string,
-  ipAddress?: string | null
+  ipAddress?: string | null,
+  metaCookies?: { fbc: string | null; fbp: string | null }
 ): Promise<{ session: Session; created: boolean }> {
   const existing = await prisma.session.findUnique({ where: { clientId: session.id } });
   if (existing) return { session: existing, created: false };
@@ -76,6 +77,8 @@ export async function findOrCreateSession(
       clientId: session.id,
       visitorId,
       referrer: session.referrer,
+      fbc: metaCookies?.fbc ?? undefined,
+      fbp: metaCookies?.fbp ?? undefined,
       utmSource: session.utmSource,
       utmMedium: session.utmMedium,
       utmCampaign: session.utmCampaign,

@@ -24,9 +24,13 @@ function hashPhone(phone: string | null | undefined): string | undefined {
   return sha256(withCountryCode);
 }
 
-function buildFbc(fbclid: string | null | undefined, clickedAt: Date): string | undefined {
-  if (!fbclid) return undefined;
-  return `fb.1.${clickedAt.getTime()}.${fbclid}`;
+// Prefer the real _fbc cookie — it carries the true click timestamp. Only synthesise
+// from a stored fbclid when the cookie is missing (no pixel on the page, or it fired
+// after this session's first request), anchored to session start, never to send time.
+function buildFbc(session: Session): string | undefined {
+  if (session.fbc) return session.fbc;
+  if (!session.fbclid) return undefined;
+  return `fb.1.${session.startedAt.getTime()}.${session.fbclid}`;
 }
 
 interface CapiCredentials {
@@ -67,7 +71,8 @@ function buildUserData(lead: Lead, session: Session, requestInfo: CapiRequestInf
     external_id: [sha256(lead.visitorId)],
     client_ip_address: requestInfo.ip ?? undefined,
     client_user_agent: requestInfo.userAgent ?? undefined,
-    fbc: buildFbc(session.fbclid, session.startedAt),
+    fbc: buildFbc(session),
+    fbp: session.fbp ?? undefined,
   };
 }
 

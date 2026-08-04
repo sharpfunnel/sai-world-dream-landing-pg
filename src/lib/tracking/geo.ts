@@ -33,3 +33,28 @@ export function readGeoFromHeaders(headers: Headers): GeoInfo {
 export function readIpFromHeaders(headers: Headers): string | null {
   return ipAddress(headers) ?? null;
 }
+
+export interface MetaCookies {
+  fbc: string | null;
+  fbp: string | null;
+}
+
+/**
+ * `_fbc`/`_fbp` are first-party cookies the Meta Pixel writes on this domain — the
+ * strongest match signals CAPI can send, and deterministic (unlike a hashed email).
+ * Read directly off the request rather than trusting anything the client claims.
+ */
+export function readMetaCookies(headers: Headers): MetaCookies {
+  const header = headers.get("cookie") ?? "";
+  const jar = Object.fromEntries(
+    header
+      .split(";")
+      .map((part) => part.trim())
+      .filter(Boolean)
+      .map((part) => {
+        const [name, ...rest] = part.split("=");
+        return [name, rest.join("=")];
+      })
+  );
+  return { fbc: jar._fbc || null, fbp: jar._fbp || null };
+}

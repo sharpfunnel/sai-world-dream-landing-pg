@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { InputJsonValue } from "@prisma/client/runtime/client";
 import { prisma } from "@/lib/prisma";
 import { upsertVisitor, findOrCreateSession, type SessionIdentity } from "@/lib/tracking/resolveVisitorSession";
-import { readIpFromHeaders } from "@/lib/tracking/geo";
+import { readIpFromHeaders, readMetaCookies } from "@/lib/tracking/geo";
 import type {
   CtaEventPayload,
   ErrorEventPayload,
@@ -74,7 +74,8 @@ export async function POST(request: Request) {
       visitor.id,
       session,
       firstPath,
-      readIpFromHeaders(request.headers)
+      readIpFromHeaders(request.headers),
+      readMetaCookies(request.headers)
     );
 
     if (events.length > 0) {
