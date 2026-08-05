@@ -98,3 +98,47 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }
+
+/** Fills in optional details (configuration, email, budget, message) a visitor adds on the thank-you page. */
+export async function PATCH(request: Request) {
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+
+  if (!body || typeof body !== "object") {
+    return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
+  }
+
+  const candidate = body as Record<string, unknown>;
+  const leadId = typeof candidate.leadId === "string" ? candidate.leadId : "";
+  if (!LEAD_ID_PATTERN.test(leadId)) {
+    return NextResponse.json({ error: "leadId is required" }, { status: 400 });
+  }
+
+  const config = typeof candidate.config === "string" ? candidate.config.trim() : "";
+  const email = typeof candidate.email === "string" ? candidate.email.trim() : "";
+  const budget = typeof candidate.budget === "string" ? candidate.budget.trim() : "";
+  const message = typeof candidate.message === "string" ? candidate.message.trim() : "";
+  if (!config && !email && !budget && !message) {
+    return NextResponse.json({ error: "Nothing to update" }, { status: 400 });
+  }
+
+  try {
+    await prisma.lead.update({
+      where: { id: leadId },
+      data: {
+        ...(config ? { config } : {}),
+        ...(email ? { email } : {}),
+        ...(budget ? { budget } : {}),
+        ...(message ? { message } : {}),
+      },
+    });
+  } catch {
+    return NextResponse.json({ error: "Lead not found" }, { status: 404 });
+  }
+
+  return NextResponse.json({ ok: true });
+}

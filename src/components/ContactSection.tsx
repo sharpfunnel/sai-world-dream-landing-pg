@@ -71,7 +71,6 @@ export default function ContactSection() {
             variant="light"
             title="Send Us an Enquiry"
             subtitle="Fill in the form below and our sales team will get back to you shortly."
-            showExtras
           />
         </Reveal>
       </Container>

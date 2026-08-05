@@ -185,11 +185,11 @@ export interface LeadFields {
  * row's primary key. That lets the Meta pixel's `Lead` event fire immediately with
  * the same id the server-side CAPI event will use, which is what lets Meta dedup them.
  */
-export async function submitLead(formId: string, fields: LeadFields): Promise<boolean> {
-  if (typeof window === "undefined") return false;
+export async function submitLead(formId: string, fields: LeadFields): Promise<{ ok: boolean; leadId: string }> {
+  const leadId = uuid();
+  if (typeof window === "undefined") return { ok: false, leadId };
   const visitor = getOrCreateVisitorId();
   const session = getSession();
-  const leadId = uuid();
   const payload = {
     visitorId: visitor.id,
     session: buildSessionPayload(session),
@@ -202,7 +202,7 @@ export async function submitLead(formId: string, fields: LeadFields): Promise<bo
     const blob = new Blob([JSON.stringify(payload)], { type: "application/json" });
     if (navigator.sendBeacon(LEADS_ENDPOINT, blob)) {
       trackPixelLead(leadId);
-      return true;
+      return { ok: true, leadId };
     }
   }
 
@@ -214,6 +214,23 @@ export async function submitLead(formId: string, fields: LeadFields): Promise<bo
       keepalive: true,
     });
     if (res.ok) trackPixelLead(leadId);
+    return { ok: res.ok, leadId };
+  } catch {
+    return { ok: false, leadId };
+  }
+}
+
+/** Enriches a lead created by submitLead() with the optional details collected on /thank-you. */
+export async function patchLead(
+  leadId: string,
+  fields: { config?: string; email?: string; budget?: string; message?: string }
+): Promise<boolean> {
+  try {
+    const res = await fetch(LEADS_ENDPOINT, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ leadId, ...fields }),
+    });
     return res.ok;
   } catch {
     return false;
