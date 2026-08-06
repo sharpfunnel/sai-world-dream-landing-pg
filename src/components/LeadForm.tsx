@@ -4,6 +4,7 @@ import { ChangeEvent, FormEvent, FocusEvent, InvalidEvent, useEffect, useRef, us
 import { useRouter } from "next/navigation";
 import { Send } from "lucide-react";
 import { submitLead, trackFormEvent } from "@/lib/tracking/client";
+import { isValidName, isValidPhone, sanitizeNameInput, sanitizePhoneInput } from "@/lib/validation";
 
 export default function LeadForm({
   id = "lead-form",
@@ -18,6 +19,7 @@ export default function LeadForm({
 }) {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [values, setValues] = useState({
     name: "",
     phone: "",
@@ -66,7 +68,9 @@ export default function LeadForm({
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setValues((prev) => ({ ...prev, [name]: value }));
+    const sanitized = name === "phone" ? sanitizePhoneInput(value) : name === "name" ? sanitizeNameInput(value) : value;
+    if (sanitized !== value) e.target.value = sanitized;
+    setValues((prev) => ({ ...prev, [name]: sanitized }));
   };
 
   const handleFocus = (e: FocusEvent<HTMLFormElement>) => {
@@ -93,6 +97,17 @@ export default function LeadForm({
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (submitting) return;
+
+    if (!isValidName(values.name)) {
+      setError("Please enter your full name.");
+      return;
+    }
+    if (!isValidPhone(values.phone)) {
+      setError("Please enter a valid 10-digit mobile number.");
+      return;
+    }
+    setError(null);
+
     submittedRef.current = true;
     setSubmitting(true);
     trackFormEvent(id, "submitted");
@@ -144,13 +159,20 @@ export default function LeadForm({
         type="tel"
         name="phone"
         required
-        pattern="[0-9+\s]{7,15}"
+        pattern="(?=(?:\D*\d){10}\D*$)[0-9\s\-()]+"
+        title="Enter a valid 10-digit mobile number"
+        maxLength={14}
+        inputMode="tel"
         placeholder="Mobile Number*"
         value={values.phone}
         onChange={handleChange}
         onInvalid={handleInvalid}
         className={inputClass}
       />
+
+      {error && (
+        <p className={`text-xs font-medium ${isDark ? "text-red-300" : "text-red-600"}`}>{error}</p>
+      )}
 
       <button
         type="submit"

@@ -4,11 +4,13 @@ import { ChangeEvent, FormEvent, useRef, useState } from "react";
 import { CheckCircle2, Send } from "lucide-react";
 import { CONFIG_OPTIONS } from "@/data/project";
 import { patchLead, trackFormEvent } from "@/lib/tracking/client";
+import { isValidEmail } from "@/lib/validation";
 
 const FORM_ID = "thank-you-form";
 
 export default function ThankYouOptionalForm({ leadId }: { leadId: string }) {
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
+  const [errorMessage, setErrorMessage] = useState("Something went wrong — please try again.");
   const [values, setValues] = useState({ config: "", email: "", budget: "", message: "" });
   const startedRef = useRef(false);
 
@@ -21,14 +23,21 @@ export default function ThankYouOptionalForm({ leadId }: { leadId: string }) {
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setValues((prev) => ({ ...prev, [name]: value }));
+    if (status === "error") setStatus("idle");
   };
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!values.config && !values.email && !values.budget && !values.message) return;
+    if (values.email && !isValidEmail(values.email)) {
+      setErrorMessage("Please enter a valid email address.");
+      setStatus("error");
+      return;
+    }
     setStatus("submitting");
     trackFormEvent(FORM_ID, "submitted");
     const ok = await patchLead(leadId, values);
+    if (!ok) setErrorMessage("Something went wrong — please try again.");
     setStatus(ok ? "success" : "error");
   };
 
@@ -101,9 +110,7 @@ export default function ThankYouOptionalForm({ leadId }: { leadId: string }) {
         {status === "submitting" ? "Saving..." : "Save Details"}
       </button>
 
-      {status === "error" && (
-        <p className="text-center text-xs text-red-300">Something went wrong — please try again.</p>
-      )}
+      {status === "error" && <p className="text-center text-xs text-red-300">{errorMessage}</p>}
     </form>
   );
 }

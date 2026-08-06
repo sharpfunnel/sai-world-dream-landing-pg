@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { upsertVisitor, findOrCreateSession, type SessionIdentity } from "@/lib/tracking/resolveVisitorSession";
 import { readIpFromHeaders, readMetaCookies } from "@/lib/tracking/geo";
 import { sendLeadConversionEvent } from "@/lib/meta/capi";
+import { isValidEmail, isValidName, isValidPhone } from "@/lib/validation";
 
 export const runtime = "nodejs";
 
@@ -49,6 +50,16 @@ export async function POST(request: Request) {
   }
 
   const { visitorId, session, formId, leadId, name, phone, email, config, budget, message } = body;
+
+  if (!name || !isValidName(name)) {
+    return NextResponse.json({ error: "Please enter a valid name" }, { status: 400 });
+  }
+  if (!phone || !isValidPhone(phone)) {
+    return NextResponse.json({ error: "Please enter a valid phone number" }, { status: 400 });
+  }
+  if (email && !isValidEmail(email)) {
+    return NextResponse.json({ error: "Please enter a valid email address" }, { status: 400 });
+  }
 
   try {
     const ip = readIpFromHeaders(request.headers);
@@ -124,6 +135,9 @@ export async function PATCH(request: Request) {
   const message = typeof candidate.message === "string" ? candidate.message.trim() : "";
   if (!config && !email && !budget && !message) {
     return NextResponse.json({ error: "Nothing to update" }, { status: 400 });
+  }
+  if (email && !isValidEmail(email)) {
+    return NextResponse.json({ error: "Please enter a valid email address" }, { status: 400 });
   }
 
   try {

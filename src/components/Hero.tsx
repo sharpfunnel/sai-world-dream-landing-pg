@@ -2,7 +2,7 @@ import { Phone, MessageCircle, Download } from "lucide-react";
 import Container from "@/components/ui/Container";
 import Button from "@/components/ui/Button";
 import Icon from "@/components/Icon";
-import LeadFormPreview from "@/components/LeadFormPreview";
+import LeadForm from "@/components/LeadForm";
 import GoldFrame from "@/components/ui/GoldFrame";
 import Reveal from "@/components/ui/Reveal";
 import { CONTACT, DEVELOPER, HERO, HIGHLIGHT_CARDS, SITE, STOCK_IMAGES } from "@/data/project";
@@ -94,10 +94,11 @@ export default function Hero() {
         </div>
 
         <Reveal variant="left" delay={200} duration={700} className="lg:justify-self-end lg:w-full lg:max-w-md">
-          <LeadFormPreview
+          <LeadForm
+            id="hero-form"
+            variant="card"
             title="Book Your Free Site Visit"
             subtitle="Fill in your details — our team will call you back within 30 minutes."
-            target="#contact-form"
           />
         </Reveal>
       </Container>
