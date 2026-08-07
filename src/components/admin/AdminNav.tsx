@@ -10,12 +10,14 @@ const NAV_ITEMS = [
   { href: "/admin/leads", label: "Leads", badge: "leadsCount" as const },
   { href: "/admin/sessions", label: "Sessions", badge: "sessionsCount" as const },
   { href: "/admin/heatmap", label: "Heatmap" },
+  { href: "/admin/tech-stack", label: "Tech stack" },
   { href: "/admin/campaigns", label: "Campaigns" },
   { href: "/admin/funnels", label: "Funnels" },
   { href: "/admin/ctas", label: "CTAs" },
   { href: "/admin/forms", label: "Forms" },
   { href: "/admin/performance", label: "Performance" },
   { href: "/admin/errors", label: "Errors" },
+  { href: "/admin/meta-capi", label: "Meta CAPI" },
   { href: "/admin/reports", label: "Reports" },
 ];
 

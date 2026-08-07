@@ -3,6 +3,7 @@ import type { InputJsonValue } from "@prisma/client/runtime/client";
 import { readGeoFromHeaders } from "./geo";
 import { parseUserAgent } from "./parseUserAgent";
 import type { Visitor, Session } from "@/generated/prisma/client";
+import { PrismaClientKnownRequestError } from "@/generated/prisma/internal/prismaNamespace";
 
 export interface SessionIdentity {
   id: string;
@@ -26,12 +27,14 @@ export interface SessionIdentity {
   screenHeight?: number;
   language?: string;
   timezone?: string;
+  network?: string;
+  downlink?: number;
 }
 
 export async function upsertVisitor(
   fingerprint: string,
   headers: Headers,
-  session: Pick<SessionIdentity, "timezone" | "language" | "screenWidth" | "screenHeight">
+  session: Pick<SessionIdentity, "timezone" | "language" | "screenWidth" | "screenHeight" | "network" | "downlink">
 ): Promise<Visitor> {
   const geo = readGeoFromHeaders(headers);
   const ua = parseUserAgent(headers.get("user-agent"));
@@ -53,6 +56,8 @@ export async function upsertVisitor(
     deviceType: ua.deviceType,
     screenWidth: session.screenWidth,
     screenHeight: session.screenHeight,
+    network: session.network,
+    downlink: session.downlink,
   };
 
   return prisma.visitor.upsert({
@@ -72,36 +77,46 @@ export async function findOrCreateSession(
   const existing = await prisma.session.findUnique({ where: { clientId: session.id } });
   if (existing) return { session: existing, created: false };
 
-  const created = await prisma.session.create({
-    data: {
-      clientId: session.id,
-      visitorId,
-      referrer: session.referrer,
-      fbc: metaCookies?.fbc ?? undefined,
-      fbp: metaCookies?.fbp ?? undefined,
-      utmSource: session.utmSource,
-      utmMedium: session.utmMedium,
-      utmCampaign: session.utmCampaign,
-      utmContent: session.utmContent,
-      utmTerm: session.utmTerm,
-      gclid: session.gclid,
-      fbclid: session.fbclid,
-      msclkid: session.msclkid,
-      placement: session.placement,
-      metaCampaignId: session.metaCampaignId,
-      metaAdsetId: session.metaAdsetId,
-      metaAdId: session.metaAdId,
-      rawParams: session.rawParams && Object.keys(session.rawParams).length
-        ? (session.rawParams as InputJsonValue)
-        : undefined,
-      ipAddress,
-      viewportWidth: session.viewportWidth,
-      viewportHeight: session.viewportHeight,
-      entryPath,
-      exitPath: entryPath,
-      pagesViewed: entryPath ? 1 : 0,
-      isBounce: true,
-    },
-  });
-  return { session: created, created: true };
+  try {
+    const created = await prisma.session.create({
+      data: {
+        clientId: session.id,
+        visitorId,
+        referrer: session.referrer,
+        fbc: metaCookies?.fbc ?? undefined,
+        fbp: metaCookies?.fbp ?? undefined,
+        utmSource: session.utmSource,
+        utmMedium: session.utmMedium,
+        utmCampaign: session.utmCampaign,
+        utmContent: session.utmContent,
+        utmTerm: session.utmTerm,
+        gclid: session.gclid,
+        fbclid: session.fbclid,
+        msclkid: session.msclkid,
+        placement: session.placement,
+        metaCampaignId: session.metaCampaignId,
+        metaAdsetId: session.metaAdsetId,
+        metaAdId: session.metaAdId,
+        rawParams: session.rawParams && Object.keys(session.rawParams).length
+          ? (session.rawParams as InputJsonValue)
+          : undefined,
+        ipAddress,
+        viewportWidth: session.viewportWidth,
+        viewportHeight: session.viewportHeight,
+        entryPath,
+        exitPath: entryPath,
+        pagesViewed: entryPath ? 1 : 0,
+        isBounce: true,
+      },
+    });
+    return { session: created, created: true };
+  } catch (error) {
+    // The batching queue's beacon flush and /api/leads can both race to create the
+    // same brand-new session at nearly the same instant — re-read instead of failing.
+    if (error instanceof PrismaClientKnownRequestError && error.code === "P2002") {
+      const race = await prisma.session.findUnique({ where: { clientId: session.id } });
+      if (race) return { session: race, created: false };
+    }
+    throw error;
+  }
 }

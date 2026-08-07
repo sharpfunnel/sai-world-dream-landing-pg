@@ -72,6 +72,8 @@ export interface HeatmapEventPayload {
   xPct: number;
   yPct: number;
   viewportWidth: number;
+  selector?: string;
+  elementText?: string;
   timestamp: number;
 }
 

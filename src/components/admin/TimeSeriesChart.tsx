@@ -22,8 +22,13 @@ const PAD_RIGHT = 12;
 const PAD_TOP = 12;
 const PAD_BOTTOM = 28;
 
-export function TimeSeriesChart({ data }: { data: DailyPoint[] }) {
+export function TimeSeriesChart({ data: fullData }: { data: DailyPoint[] }) {
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
+  const [dragStart, setDragStart] = useState<number | null>(null);
+  const [dragEnd, setDragEnd] = useState<number | null>(null);
+  const [zoomRange, setZoomRange] = useState<[number, number] | null>(null);
+
+  const data = zoomRange ? fullData.slice(zoomRange[0], zoomRange[1] + 1) : fullData;
 
   const { maxValue, points } = useMemo(() => {
     const max = Math.max(1, ...data.flatMap((d) => [d.visitors, d.sessions, d.leads]));
@@ -50,29 +55,66 @@ export function TimeSeriesChart({ data }: { data: DailyPoint[] }) {
   const gridLines = [0, 0.25, 0.5, 0.75, 1];
 
   const hovered = hoverIndex !== null ? data[hoverIndex] : null;
+  const isDragging = dragStart !== null && dragEnd !== null;
+  const dragLo = isDragging ? Math.min(dragStart!, dragEnd!) : null;
+  const dragHi = isDragging ? Math.max(dragStart!, dragEnd!) : null;
+
+  const indexFromClientX = (e: { clientX: number; currentTarget: SVGSVGElement }) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const relX = ((e.clientX - rect.left) / rect.width) * WIDTH;
+    const index = step > 0 ? Math.round((relX - PAD_LEFT) / step) : 0;
+    return Math.min(data.length - 1, Math.max(0, index));
+  };
 
   return (
     <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-      <div className="mb-3 flex items-center gap-4">
-        {SERIES.map((s) => (
-          <div key={s.key} className="flex items-center gap-1.5 text-xs text-slate-500">
-            <span className="h-2 w-2 rounded-full" style={{ backgroundColor: s.color }} />
-            {s.label}
-          </div>
-        ))}
+      <div className="mb-3 flex items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          {SERIES.map((s) => (
+            <div key={s.key} className="flex items-center gap-1.5 text-xs text-slate-500">
+              <span className="h-2 w-2 rounded-full" style={{ backgroundColor: s.color }} />
+              {s.label}
+            </div>
+          ))}
+        </div>
+        {zoomRange && (
+          <button
+            type="button"
+            onClick={() => setZoomRange(null)}
+            className="rounded-md border border-slate-200 px-2 py-1 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-50"
+          >
+            Reset zoom
+          </button>
+        )}
       </div>
 
       <svg
         viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
-        className="w-full"
+        className="w-full cursor-crosshair select-none"
         role="img"
-        aria-label="Daily visitors, sessions, and leads"
-        onMouseLeave={() => setHoverIndex(null)}
+        aria-label="Daily visitors, sessions, and leads — drag to zoom into a range"
+        onMouseLeave={() => {
+          setHoverIndex(null);
+          setDragStart(null);
+          setDragEnd(null);
+        }}
+        onMouseDown={(e) => {
+          const index = indexFromClientX(e);
+          setDragStart(index);
+          setDragEnd(index);
+        }}
         onMouseMove={(e) => {
-          const rect = e.currentTarget.getBoundingClientRect();
-          const relX = ((e.clientX - rect.left) / rect.width) * WIDTH;
-          const index = step > 0 ? Math.round((relX - PAD_LEFT) / step) : 0;
-          setHoverIndex(Math.min(data.length - 1, Math.max(0, index)));
+          const index = indexFromClientX(e);
+          setHoverIndex(index);
+          if (dragStart !== null) setDragEnd(index);
+        }}
+        onMouseUp={() => {
+          if (dragLo !== null && dragHi !== null && dragHi > dragLo) {
+            const baseOffset = zoomRange ? zoomRange[0] : 0;
+            setZoomRange([baseOffset + dragLo, baseOffset + dragHi]);
+          }
+          setDragStart(null);
+          setDragEnd(null);
         }}
       >
         {gridLines.map((g) => {
@@ -109,7 +151,18 @@ export function TimeSeriesChart({ data }: { data: DailyPoint[] }) {
           />
         ))}
 
-        {hoverIndex !== null && (
+        {isDragging && dragLo !== null && dragHi !== null && (
+          <rect
+            x={PAD_LEFT + step * dragLo}
+            y={PAD_TOP}
+            width={step * (dragHi - dragLo)}
+            height={HEIGHT - PAD_TOP - PAD_BOTTOM}
+            fill="#3987e5"
+            opacity={0.12}
+          />
+        )}
+
+        {hoverIndex !== null && !isDragging && (
           <line
             x1={PAD_LEFT + step * hoverIndex}
             x2={PAD_LEFT + step * hoverIndex}
@@ -120,7 +173,7 @@ export function TimeSeriesChart({ data }: { data: DailyPoint[] }) {
           />
         )}
 
-        {hoverIndex !== null &&
+        {hoverIndex !== null && !isDragging &&
           points.map((s) => {
             const c = s.coords[hoverIndex];
             return (
@@ -129,7 +182,13 @@ export function TimeSeriesChart({ data }: { data: DailyPoint[] }) {
           })}
       </svg>
 
-      {hovered && (
+      {isDragging && dragLo !== null && dragHi !== null && (
+        <p className="mt-2 text-center text-xs text-slate-500">
+          Release to zoom into {data[dragLo]?.date} – {data[dragHi]?.date}
+        </p>
+      )}
+
+      {hovered && !isDragging && (
         <div className="mt-2 flex items-center gap-4 rounded-md bg-slate-900 px-3 py-2 text-xs text-slate-300">
           <span className="font-medium text-white">{hovered.date}</span>
           {SERIES.map((s) => (

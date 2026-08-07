@@ -117,6 +117,14 @@ export function getSession(): SessionContext {
   };
 }
 
+/** Network Information API — not in the DOM lib types, and unsupported in Safari/Firefox
+ *  (expect nulls from those browsers), so this is read defensively. */
+function readConnectionInfo(): { network?: string; downlink?: number } {
+  const connection = (navigator as unknown as { connection?: { effectiveType?: string; downlink?: number } }).connection;
+  if (!connection) return {};
+  return { network: connection.effectiveType, downlink: connection.downlink };
+}
+
 function buildSessionPayload(session: SessionContext) {
   return {
     id: session.meta.id,
@@ -130,6 +138,7 @@ function buildSessionPayload(session: SessionContext) {
     screenHeight: window.screen?.height,
     language: navigator.language,
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    ...readConnectionInfo(),
   };
 }
 
@@ -318,9 +327,21 @@ export function trackHeatmap(
   heatmapType: HeatmapEventPayload["heatmapType"],
   xPct: number,
   yPct: number,
-  viewportWidth: number
+  viewportWidth: number,
+  selector?: string,
+  elementText?: string
 ) {
-  const payload: HeatmapEventPayload = { type: "heatmap", path, heatmapType, xPct, yPct, viewportWidth, timestamp: Date.now() };
+  const payload: HeatmapEventPayload = {
+    type: "heatmap",
+    path,
+    heatmapType,
+    xPct,
+    yPct,
+    viewportWidth,
+    selector,
+    elementText,
+    timestamp: Date.now(),
+  };
   enqueue(payload);
 }
 

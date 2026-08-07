@@ -26,6 +26,10 @@ function handleMouseOver(e: MouseEvent) {
   }
 }
 
+function observeCtaElement(el: Element) {
+  observer?.observe(el);
+}
+
 function observeCtas() {
   observer = new IntersectionObserver(
     (entries) => {
@@ -41,7 +45,25 @@ function observeCtas() {
     },
     { threshold: 0.5 }
   );
-  document.querySelectorAll("[data-cta]").forEach((el) => observer?.observe(el));
+  document.querySelectorAll("[data-cta]").forEach(observeCtaElement);
+}
+
+/**
+ * CTAs added after initial mount (client-side nav, dynamic content, e.g. a modal or a
+ * lazily-rendered section) would otherwise never get "viewed" tracking — the
+ * IntersectionObserver above only ever saw the DOM as it existed at init time.
+ */
+function watchForNewCtas() {
+  const mutationObserver = new MutationObserver((mutations) => {
+    for (const mutation of mutations) {
+      for (const node of mutation.addedNodes) {
+        if (!(node instanceof Element)) continue;
+        if (node.matches("[data-cta]")) observeCtaElement(node);
+        node.querySelectorAll?.("[data-cta]").forEach(observeCtaElement);
+      }
+    }
+  });
+  mutationObserver.observe(document.body, { childList: true, subtree: true });
 }
 
 export function initCtaTracking() {
@@ -51,5 +73,6 @@ export function initCtaTracking() {
   document.addEventListener("mouseover", handleMouseOver, true);
   if ("IntersectionObserver" in window) {
     requestAnimationFrame(observeCtas);
+    if ("MutationObserver" in window) watchForNewCtas();
   }
 }

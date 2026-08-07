@@ -1,6 +1,7 @@
 import "server-only";
 import { gunzipSync } from "zlib";
 import { prisma } from "@/lib/prisma";
+import type { Prisma } from "@/generated/prisma/client";
 
 function daysAgo(days: number): Date {
   return new Date(Date.now() - days * 24 * 60 * 60 * 1000);
@@ -10,9 +11,7 @@ function dayKey(date: Date): string {
   return date.toISOString().slice(0, 10);
 }
 
-export async function getOverviewStats(days = 30) {
-  const since = daysAgo(days);
-
+async function periodStats(range: { gte: Date; lt?: Date }) {
   const [
     visitorCount,
     sessionCount,
@@ -24,22 +23,22 @@ export async function getOverviewStats(days = 30) {
     scrolledDeepCount,
     ctaClickCount,
   ] = await Promise.all([
-    prisma.visitor.count({ where: { firstSeenAt: { gte: since } } }),
-    prisma.session.count({ where: { startedAt: { gte: since } } }),
-    prisma.lead.count({ where: { createdAt: { gte: since } } }),
-    prisma.session.count({ where: { startedAt: { gte: since }, isBounce: true } }),
+    prisma.visitor.count({ where: { firstSeenAt: range } }),
+    prisma.session.count({ where: { startedAt: range } }),
+    prisma.lead.count({ where: { createdAt: range } }),
+    prisma.session.count({ where: { startedAt: range, isBounce: true } }),
     prisma.session.aggregate({
-      where: { startedAt: { gte: since }, totalDuration: { not: null } },
+      where: { startedAt: range, totalDuration: { not: null } },
       _avg: { totalDuration: true },
     }),
     prisma.scrollEvent.groupBy({
       by: ["sessionId"],
-      where: { createdAt: { gte: since } },
+      where: { createdAt: range },
       _max: { depth: true },
     }),
-    prisma.pageView.count({ where: { session: { startedAt: { gte: since } } } }),
-    prisma.session.count({ where: { startedAt: { gte: since }, scrollEvents: { some: { depth: { gte: 50 } } } } }),
-    prisma.session.count({ where: { startedAt: { gte: since }, ctaEvents: { some: { action: "clicked" } } } }),
+    prisma.pageView.count({ where: { session: { startedAt: range } } }),
+    prisma.session.count({ where: { startedAt: range, scrollEvents: { some: { depth: { gte: 50 } } } } }),
+    prisma.session.count({ where: { startedAt: range, ctaEvents: { some: { action: "clicked" } } } }),
   ]);
 
   const avgScrollDepth = maxDepths.length
@@ -58,6 +57,121 @@ export async function getOverviewStats(days = 30) {
     avgSessionDuration: durationAgg._avg.totalDuration ?? 0,
     avgScrollDepth,
   };
+}
+
+/** null means "no prior-period data to compare against" — the UI renders that as no badge. */
+function pctDelta(current: number, previous: number): number | null {
+  if (!previous) return null;
+  return Math.round(((current - previous) / previous) * 1000) / 10;
+}
+
+export async function getOverviewStats(days = 30) {
+  const since = daysAgo(days);
+  const prevSince = daysAgo(days * 2);
+
+  const [current, previous] = await Promise.all([
+    periodStats({ gte: since }),
+    periodStats({ gte: prevSince, lt: since }),
+  ]);
+
+  return {
+    ...current,
+    deltas: {
+      visitorCount: pctDelta(current.visitorCount, previous.visitorCount),
+      sessionCount: pctDelta(current.sessionCount, previous.sessionCount),
+      leadCount: pctDelta(current.leadCount, previous.leadCount),
+      conversionRate: pctDelta(current.conversionRate, previous.conversionRate),
+      scrolledDeepCount: pctDelta(current.scrolledDeepCount, previous.scrolledDeepCount),
+      ctaClickCount: pctDelta(current.ctaClickCount, previous.ctaClickCount),
+      avgSessionDuration: pctDelta(current.avgSessionDuration, previous.avgSessionDuration),
+    },
+  };
+}
+
+/** "Live" = a session with no endedAt stamp yet and some activity signal in the last 5 minutes. */
+export async function getLiveVisitorCount(): Promise<number> {
+  const since = new Date(Date.now() - 5 * 60 * 1000);
+  const [pageviews, events, scrolls, ctas] = await Promise.all([
+    prisma.pageView.findMany({ where: { enteredAt: { gte: since } }, select: { sessionId: true } }),
+    prisma.event.findMany({ where: { createdAt: { gte: since } }, select: { sessionId: true } }),
+    prisma.scrollEvent.findMany({ where: { createdAt: { gte: since } }, select: { sessionId: true } }),
+    prisma.ctaEvent.findMany({ where: { createdAt: { gte: since } }, select: { sessionId: true } }),
+  ]);
+  const activeIds = new Set([...pageviews, ...events, ...scrolls, ...ctas].map((r) => r.sessionId));
+  if (activeIds.size === 0) return 0;
+  return prisma.session.count({ where: { id: { in: Array.from(activeIds) }, endedAt: null } });
+}
+
+export async function getDeviceBreakdown(days = 30) {
+  const since = daysAgo(days);
+  const sessions = await prisma.session.findMany({
+    where: { startedAt: { gte: since } },
+    select: { visitor: { select: { deviceType: true } } },
+  });
+  const counts = new Map<string, number>();
+  for (const s of sessions) {
+    const key = s.visitor.deviceType ?? "Unknown";
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  return Array.from(counts.entries())
+    .map(([label, count]) => ({ label, count }))
+    .sort((a, b) => b.count - a.count);
+}
+
+export async function getBrowserBreakdown(days = 30, limit = 8) {
+  const since = daysAgo(days);
+  const sessions = await prisma.session.findMany({
+    where: { startedAt: { gte: since } },
+    select: { visitor: { select: { browser: true } } },
+  });
+  const counts = new Map<string, number>();
+  for (const s of sessions) {
+    const key = s.visitor.browser ?? "Unknown";
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  return Array.from(counts.entries())
+    .map(([label, count]) => ({ label, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, limit);
+}
+
+export async function getTopPages(days = 30, limit = 10) {
+  const since = daysAgo(days);
+  const rows = await prisma.pageView.findMany({
+    where: { session: { startedAt: { gte: since } } },
+    select: { path: true },
+  });
+  const counts = new Map<string, number>();
+  for (const r of rows) counts.set(r.path, (counts.get(r.path) ?? 0) + 1);
+  return Array.from(counts.entries())
+    .map(([label, count]) => ({ label, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, limit);
+}
+
+export async function getVisitorsByCountry(days = 30, limit = 20) {
+  const since = daysAgo(days);
+  const [visitors, leads] = await Promise.all([
+    prisma.visitor.findMany({ where: { firstSeenAt: { gte: since }, country: { not: null } }, select: { country: true } }),
+    prisma.lead.findMany({
+      where: { createdAt: { gte: since } },
+      select: { visitor: { select: { country: true } } },
+    }),
+  ]);
+
+  const counts = new Map<string, number>();
+  for (const v of visitors) {
+    if (v.country) counts.set(v.country, (counts.get(v.country) ?? 0) + 1);
+  }
+  const leadCounts = new Map<string, number>();
+  for (const l of leads) {
+    if (l.visitor.country) leadCounts.set(l.visitor.country, (leadCounts.get(l.visitor.country) ?? 0) + 1);
+  }
+
+  return Array.from(counts.entries())
+    .map(([code, count]) => ({ code, count, leads: leadCounts.get(code) ?? 0 }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, limit);
 }
 
 export async function getNavBadgeCounts() {
@@ -132,44 +246,234 @@ export async function getRecentLeads(limit = 5) {
   });
 }
 
-export async function getLeads(status?: string, limit = 200) {
-  return prisma.lead.findMany({
-    where: status && status !== "all" ? { status } : undefined,
-    orderBy: { createdAt: "desc" },
-    take: limit,
-    include: {
-      session: {
-        select: {
-          utmSource: true,
-          utmMedium: true,
-          utmCampaign: true,
-          utmContent: true,
-          utmTerm: true,
-          placement: true,
-          metaAdId: true,
-          rawParams: true,
-        },
-      },
-      visitor: {
-        select: {
-          city: true,
-          country: true,
-        },
-      },
-    },
-  });
+export interface LeadFilters {
+  status?: string;
+  source?: string;
+  campaign?: string;
+  country?: string;
+  device?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  search?: string;
 }
 
-export async function getSessions(limit = 100) {
-  return prisma.session.findMany({
-    orderBy: { startedAt: "desc" },
-    take: limit,
-    include: {
-      visitor: true,
-      leads: { select: { config: true }, orderBy: { createdAt: "asc" }, take: 1 },
-      _count: { select: { pageViews: true, replayChunks: true } },
-    },
+export async function getLeadFilterOptions() {
+  const [sources, campaigns, countries, devices] = await Promise.all([
+    prisma.session.findMany({ where: { utmSource: { not: null } }, select: { utmSource: true }, distinct: ["utmSource"] }),
+    prisma.session.findMany({
+      where: { utmCampaign: { not: null } },
+      select: { utmCampaign: true },
+      distinct: ["utmCampaign"],
+    }),
+    prisma.visitor.findMany({ where: { country: { not: null } }, select: { country: true }, distinct: ["country"] }),
+    prisma.visitor.findMany({ where: { deviceType: { not: null } }, select: { deviceType: true }, distinct: ["deviceType"] }),
+  ]);
+  return {
+    sources: sources.map((s) => s.utmSource!).sort(),
+    campaigns: campaigns.map((c) => c.utmCampaign!).sort(),
+    countries: countries.map((c) => c.country!).sort(),
+    devices: devices.map((d) => d.deviceType!).sort(),
+  };
+}
+
+export async function getLeads(filters: LeadFilters = {}, page = 1, pageSize = 50) {
+  const where: Prisma.LeadWhereInput = {};
+  if (filters.status && filters.status !== "all") where.status = filters.status;
+  if (filters.source) where.source = filters.source;
+  if (filters.campaign) where.session = { utmCampaign: filters.campaign };
+  if (filters.country || filters.device) {
+    where.visitor = {
+      ...(filters.country ? { country: filters.country } : {}),
+      ...(filters.device ? { deviceType: filters.device } : {}),
+    };
+  }
+  if (filters.dateFrom || filters.dateTo) {
+    where.createdAt = {
+      ...(filters.dateFrom ? { gte: new Date(filters.dateFrom) } : {}),
+      ...(filters.dateTo ? { lte: new Date(`${filters.dateTo}T23:59:59.999Z`) } : {}),
+    };
+  }
+  if (filters.search) {
+    const q = filters.search.trim();
+    if (q) {
+      where.OR = [
+        { name: { contains: q, mode: "insensitive" } },
+        { phone: { contains: q, mode: "insensitive" } },
+        { email: { contains: q, mode: "insensitive" } },
+      ];
+    }
+  }
+
+  const [leads, total] = await Promise.all([
+    prisma.lead.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      include: {
+        session: {
+          select: {
+            utmSource: true,
+            utmMedium: true,
+            utmCampaign: true,
+            utmContent: true,
+            utmTerm: true,
+            placement: true,
+            metaAdId: true,
+            rawParams: true,
+          },
+        },
+        visitor: {
+          select: {
+            city: true,
+            country: true,
+            deviceType: true,
+          },
+        },
+      },
+    }),
+    prisma.lead.count({ where }),
+  ]);
+
+  return { leads, total, page, pageSize, totalPages: Math.max(1, Math.ceil(total / pageSize)) };
+}
+
+export async function getLeadDetail(leadId: string) {
+  const lead = await prisma.lead.findUnique({
+    where: { id: leadId },
+    include: { session: true, visitor: true },
   });
+  if (!lead) return null;
+
+  const [visitCount, firstSession, pageViews, timeline, replay] = await Promise.all([
+    prisma.session.count({ where: { visitorId: lead.visitorId } }),
+    prisma.session.findFirst({ where: { visitorId: lead.visitorId }, orderBy: { startedAt: "asc" }, select: { entryPath: true } }),
+    prisma.pageView.findMany({
+      where: { sessionId: lead.sessionId },
+      orderBy: { enteredAt: "asc" },
+      select: { path: true, enteredAt: true, exitedAt: true, timeOnPage: true },
+    }),
+    getSessionTimeline(lead.sessionId),
+    prisma.sessionReplay.findFirst({ where: { sessionId: lead.sessionId }, select: { id: true } }),
+  ]);
+
+  return {
+    lead,
+    visitCount,
+    landingPage: firstSession?.entryPath ?? lead.session.entryPath,
+    pageViews,
+    timeline,
+    hasReplay: replay !== null,
+  };
+}
+
+export interface SessionFilters {
+  device?: string;
+  browser?: string;
+  os?: string;
+  country?: string;
+  dateFrom?: string;
+  dateTo?: string;
+}
+
+export async function getSessionFilterOptions() {
+  const [devices, browsers, oses, countries] = await Promise.all([
+    prisma.visitor.findMany({ where: { deviceType: { not: null } }, select: { deviceType: true }, distinct: ["deviceType"] }),
+    prisma.visitor.findMany({ where: { browser: { not: null } }, select: { browser: true }, distinct: ["browser"] }),
+    prisma.visitor.findMany({ where: { os: { not: null } }, select: { os: true }, distinct: ["os"] }),
+    prisma.visitor.findMany({ where: { country: { not: null } }, select: { country: true }, distinct: ["country"] }),
+  ]);
+  return {
+    devices: devices.map((d) => d.deviceType!).sort(),
+    browsers: browsers.map((b) => b.browser!).sort(),
+    oses: oses.map((o) => o.os!).sort(),
+    countries: countries.map((c) => c.country!).sort(),
+  };
+}
+
+export async function getSessions(filters: SessionFilters = {}, page = 1, pageSize = 50) {
+  const where: Prisma.SessionWhereInput = {};
+  if (filters.dateFrom || filters.dateTo) {
+    where.startedAt = {
+      ...(filters.dateFrom ? { gte: new Date(filters.dateFrom) } : {}),
+      ...(filters.dateTo ? { lte: new Date(`${filters.dateTo}T23:59:59.999Z`) } : {}),
+    };
+  }
+  if (filters.device || filters.browser || filters.os || filters.country) {
+    where.visitor = {
+      ...(filters.device ? { deviceType: filters.device } : {}),
+      ...(filters.browser ? { browser: filters.browser } : {}),
+      ...(filters.os ? { os: filters.os } : {}),
+      ...(filters.country ? { country: filters.country } : {}),
+    };
+  }
+
+  const [sessions, total] = await Promise.all([
+    prisma.session.findMany({
+      where,
+      orderBy: { startedAt: "desc" },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      include: {
+        visitor: true,
+        leads: { select: { config: true }, orderBy: { createdAt: "asc" }, take: 1 },
+        scrollEvents: { orderBy: { depth: "desc" }, take: 1, select: { depth: true } },
+        _count: {
+          select: {
+            pageViews: true,
+            replayChunks: true,
+            scrollEvents: true,
+            ctaEvents: true,
+            formEvents: true,
+            mouseEvents: true,
+          },
+        },
+      },
+    }),
+    prisma.session.count({ where }),
+  ]);
+
+  return { sessions, total, page, pageSize, totalPages: Math.max(1, Math.ceil(total / pageSize)) };
+}
+
+export interface TimelineEntry {
+  type: "pageview" | "event" | "scroll" | "cta" | "form" | "error";
+  label: string;
+  detail?: string;
+  at: Date;
+}
+
+/** Merged chronological activity for one session — used by the leads/sessions detail panels. */
+export async function getSessionTimeline(sessionId: string): Promise<TimelineEntry[]> {
+  const [pageViews, events, scrolls, ctas, forms, errors] = await Promise.all([
+    prisma.pageView.findMany({ where: { sessionId }, select: { path: true, enteredAt: true } }),
+    prisma.event.findMany({ where: { sessionId }, select: { name: true, createdAt: true } }),
+    prisma.scrollEvent.findMany({ where: { sessionId }, select: { path: true, depth: true, createdAt: true } }),
+    prisma.ctaEvent.findMany({ where: { sessionId }, select: { ctaId: true, action: true, createdAt: true } }),
+    prisma.formEvent.findMany({ where: { sessionId }, select: { formId: true, action: true, fieldName: true, createdAt: true } }),
+    prisma.errorEvent.findMany({ where: { sessionId }, select: { type: true, message: true, createdAt: true } }),
+  ]);
+
+  const timeline: TimelineEntry[] = [
+    ...pageViews.map((p) => ({ type: "pageview" as const, label: `Viewed ${p.path}`, at: p.enteredAt })),
+    ...events.map((e) => ({ type: "event" as const, label: e.name, at: e.createdAt })),
+    ...scrolls.map((s) => ({
+      type: "scroll" as const,
+      label: `Scrolled ${s.depth}%`,
+      detail: s.path,
+      at: s.createdAt,
+    })),
+    ...ctas.map((c) => ({ type: "cta" as const, label: `CTA ${c.action}: ${c.ctaId}`, at: c.createdAt })),
+    ...forms.map((f) => ({
+      type: "form" as const,
+      label: `Form ${f.action}: ${f.formId}`,
+      detail: f.fieldName ?? undefined,
+      at: f.createdAt,
+    })),
+    ...errors.map((e) => ({ type: "error" as const, label: `Error: ${e.type}`, detail: e.message, at: e.createdAt })),
+  ];
+
+  return timeline.sort((a, b) => a.at.getTime() - b.at.getTime());
 }
 
 export async function getCtaStats(days = 30) {
@@ -282,12 +586,183 @@ export async function getHeatmapPaths() {
   return rows.map((r) => r.path).sort();
 }
 
-export async function getHeatmapPoints(path: string, type: "click" | "hover", limit = 3000) {
+export interface HeatmapFilters {
+  days?: number;
+  device?: string;
+}
+
+function heatmapWhere(path: string, type: "click" | "hover", filters: HeatmapFilters) {
+  return {
+    path,
+    type,
+    ...(filters.days ? { createdAt: { gte: daysAgo(filters.days) } } : {}),
+    ...(filters.device ? { session: { visitor: { deviceType: filters.device } } } : {}),
+  };
+}
+
+export async function getHeatmapPoints(path: string, type: "click" | "hover", filters: HeatmapFilters = {}, limit = 3000) {
   return prisma.heatmapEvent.findMany({
-    where: { path, type },
+    where: heatmapWhere(path, type, filters),
     select: { xPct: true, yPct: true },
     take: limit,
     orderBy: { createdAt: "desc" },
+  });
+}
+
+export async function getHeatmapSummary(path: string, filters: HeatmapFilters = {}) {
+  const [clicks, hovers, sessions] = await Promise.all([
+    prisma.heatmapEvent.count({ where: heatmapWhere(path, "click", filters) }),
+    prisma.heatmapEvent.count({ where: heatmapWhere(path, "hover", filters) }),
+    prisma.heatmapEvent.findMany({
+      where: { path, ...(filters.days ? { createdAt: { gte: daysAgo(filters.days) } } : {}) },
+      select: { sessionId: true },
+      distinct: ["sessionId"],
+    }),
+  ]);
+  return { clicks, hovers, sessions: sessions.length };
+}
+
+/** Ranked "most clicked/hovered elements" — clustered by CSS selector rather than a raw
+ *  point cloud, with a conversion rate per element (sessions that interacted with it and
+ *  went on to submit a lead). */
+export async function getInteractionHotspots(
+  path: string,
+  type: "click" | "hover",
+  filters: HeatmapFilters = {},
+  limit = 15
+) {
+  const events = await prisma.heatmapEvent.findMany({
+    where: { ...heatmapWhere(path, type, filters), selector: { not: null } },
+    select: { selector: true, elementText: true, sessionId: true },
+  });
+
+  const bySelector = new Map<string, { count: number; sessions: Set<string>; text?: string }>();
+  for (const e of events) {
+    if (!e.selector) continue;
+    const entry = bySelector.get(e.selector) ?? { count: 0, sessions: new Set<string>(), text: e.elementText ?? undefined };
+    entry.count += 1;
+    entry.sessions.add(e.sessionId);
+    if (!entry.text && e.elementText) entry.text = e.elementText;
+    bySelector.set(e.selector, entry);
+  }
+
+  const allSessionIds = Array.from(new Set(Array.from(bySelector.values()).flatMap((v) => Array.from(v.sessions))));
+  const leadSessions = allSessionIds.length
+    ? await prisma.lead.findMany({ where: { sessionId: { in: allSessionIds } }, select: { sessionId: true } })
+    : [];
+  const leadSessionIds = new Set(leadSessions.map((l) => l.sessionId));
+
+  return Array.from(bySelector.entries())
+    .map(([selector, v]) => {
+      const sessionCount = v.sessions.size;
+      const converted = Array.from(v.sessions).filter((id) => leadSessionIds.has(id)).length;
+      return {
+        selector,
+        elementText: v.text,
+        count: v.count,
+        sessionCount,
+        conversionRate: sessionCount ? (converted / sessionCount) * 100 : 0,
+      };
+    })
+    .sort((a, b) => b.count - a.count)
+    .slice(0, limit);
+}
+
+/** % of sessions on this path that reached each scroll-depth milestone (cumulative). */
+export async function getScrollDepthProfile(path: string, days = 30) {
+  const since = daysAgo(days);
+  const rows = await prisma.scrollEvent.groupBy({
+    by: ["sessionId"],
+    where: { path, createdAt: { gte: since } },
+    _max: { depth: true },
+  });
+  const total = rows.length;
+  const milestones = [10, 25, 50, 75, 90, 100];
+  return milestones.map((depth) => {
+    const sessions = rows.filter((r) => (r._max.depth ?? 0) >= depth).length;
+    return { depth, sessions, pct: total ? Math.round((sessions / total) * 1000) / 10 : 0 };
+  });
+}
+
+interface TechStackRow {
+  isBounce: boolean;
+  converted: boolean;
+  deviceType: string;
+  browser: string;
+  os: string;
+  screenResolution: string;
+  viewport: string;
+  language: string;
+  network: string;
+}
+
+export async function getTechStackData(days = 30) {
+  const since = daysAgo(days);
+  const sessions = await prisma.session.findMany({
+    where: { startedAt: { gte: since } },
+    select: {
+      isBounce: true,
+      language: true,
+      viewportWidth: true,
+      viewportHeight: true,
+      leads: { select: { id: true }, take: 1 },
+      visitor: {
+        select: { deviceType: true, browser: true, os: true, screenWidth: true, screenHeight: true, network: true },
+      },
+    },
+  });
+
+  const rows: TechStackRow[] = sessions.map((s) => ({
+    isBounce: s.isBounce,
+    converted: s.leads.length > 0,
+    deviceType: s.visitor.deviceType ?? "Unknown",
+    browser: s.visitor.browser ?? "Unknown",
+    os: s.visitor.os ?? "Unknown",
+    screenResolution: s.visitor.screenWidth && s.visitor.screenHeight ? `${s.visitor.screenWidth}×${s.visitor.screenHeight}` : "Unknown",
+    viewport: s.viewportWidth && s.viewportHeight ? `${s.viewportWidth}×${s.viewportHeight}` : "Unknown",
+    language: s.language ?? "Unknown",
+    network: s.visitor.network ?? "Unknown",
+  }));
+
+  function breakdown(key: keyof TechStackRow, limit = 10) {
+    const groups = new Map<string, { sessions: number; bounces: number; conversions: number }>();
+    for (const r of rows) {
+      const k = String(r[key]);
+      const g = groups.get(k) ?? { sessions: 0, bounces: 0, conversions: 0 };
+      g.sessions += 1;
+      if (r.isBounce) g.bounces += 1;
+      if (r.converted) g.conversions += 1;
+      groups.set(k, g);
+    }
+    return Array.from(groups.entries())
+      .map(([label, g]) => ({
+        label,
+        sessions: g.sessions,
+        bounceRate: g.sessions ? Math.round((g.bounces / g.sessions) * 1000) / 10 : 0,
+        conversionRate: g.sessions ? Math.round((g.conversions / g.sessions) * 1000) / 10 : 0,
+      }))
+      .sort((a, b) => b.sessions - a.sessions)
+      .slice(0, limit);
+  }
+
+  return {
+    devices: breakdown("deviceType"),
+    browsers: breakdown("browser"),
+    oses: breakdown("os"),
+    screenResolutions: breakdown("screenResolution"),
+    viewports: breakdown("viewport"),
+    languages: breakdown("language"),
+    networks: breakdown("network"),
+  };
+}
+
+/** Leads + full session data, for the /admin/meta-capi dry-run payload composer and
+ *  delivery log — a lead's real conversion send needs the same Session row CAPI itself reads. */
+export async function getLeadsForCapiPreview(limit = 50) {
+  return prisma.lead.findMany({
+    orderBy: { createdAt: "desc" },
+    take: limit,
+    include: { session: true },
   });
 }
 

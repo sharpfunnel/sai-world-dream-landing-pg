@@ -117,6 +117,25 @@ export async function sendLeadConversionEvent(lead: Lead, session: Session, requ
   }
 }
 
+/** Builds the exact payload sendLeadConversionEvent() would POST to Meta, without ever
+ *  calling fetch or touching the lead's metaCapiSentAt/metaCapiError columns. Used by the
+ *  /admin/meta-capi dry-run composer — the values shown (em/ph/external_id) are one-way
+ *  SHA-256 hashes, safe to display, same as what Meta's own Event Testing tool shows. */
+export function buildDryRunPayload(lead: Lead, session: Session, requestInfo: CapiRequestInfo) {
+  return {
+    event_name: "Lead",
+    event_time: Math.floor(lead.createdAt.getTime() / 1000),
+    event_id: lead.id,
+    action_source: "website",
+    event_source_url: requestInfo.sourceUrl ?? undefined,
+    user_data: buildUserData(lead, session, requestInfo),
+    custom_data: {
+      content_name: lead.config ?? undefined,
+      lead_source: lead.source ?? undefined,
+    },
+  };
+}
+
 export const CAPI_EVENT_TYPES = [
   "Purchase",
   "Lead",

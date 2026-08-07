@@ -2,9 +2,20 @@ import Link from "next/link";
 import { PlayCircle } from "lucide-react";
 import { PageHeader } from "@/components/admin/PageHeader";
 import { Table, Thead, Th, Tr, Td, EmptyState } from "@/components/admin/Table";
-import { getSessions } from "@/lib/admin/queries";
+import { Pagination } from "@/components/admin/Pagination";
+import { getSessions, getSessionFilterOptions, type SessionFilters } from "@/lib/admin/queries";
 
 export const dynamic = "force-dynamic";
+
+interface SessionsSearchParams {
+  device?: string;
+  browser?: string;
+  os?: string;
+  country?: string;
+  from?: string;
+  to?: string;
+  page?: string;
+}
 
 function formatDuration(seconds: number | null): string {
   if (!seconds) return "—";
@@ -31,44 +42,105 @@ function hostnameOf(url: string): string | null {
   }
 }
 
-function formatRawParams(raw: unknown): { preview: string; full: string } | null {
-  if (!raw || typeof raw !== "object") return null;
-  const entries = Object.entries(raw as Record<string, string>);
-  if (entries.length === 0) return null;
-  return {
-    preview: `${entries.length} param${entries.length === 1 ? "" : "s"}`,
-    full: entries.map(([k, v]) => `${k}=${v}`).join("\n"),
-  };
+function statusOf(session: { endedAt: Date | null; isBounce: boolean; startedAt: Date }) {
+  if (!session.endedAt && Date.now() - session.startedAt.getTime() < 5 * 60 * 1000) {
+    return { label: "Live", className: "bg-emerald-50 text-emerald-700" };
+  }
+  if (session.isBounce) return { label: "Bounced", className: "bg-amber-50 text-amber-700" };
+  return { label: "Completed", className: "bg-slate-100 text-slate-600" };
 }
 
-export default async function AdminSessionsPage() {
-  const sessions = await getSessions(100);
+export default async function AdminSessionsPage({
+  searchParams,
+}: {
+  searchParams: Promise<SessionsSearchParams>;
+}) {
+  const sp = await searchParams;
+  const page = Math.max(1, Number(sp.page) || 1);
+
+  const filters: SessionFilters = {
+    device: sp.device,
+    browser: sp.browser,
+    os: sp.os,
+    country: sp.country,
+    dateFrom: sp.from,
+    dateTo: sp.to,
+  };
+
+  const [{ sessions, total, totalPages }, filterOptions] = await Promise.all([
+    getSessions(filters, page, 50),
+    getSessionFilterOptions(),
+  ]);
+
+  const hasFilters = sp.device || sp.browser || sp.os || sp.country || sp.from || sp.to;
 
   return (
     <div>
-      <PageHeader title="Sessions" description="Most recent 100 sessions" />
+      <PageHeader title="Sessions" description={`${total} session${total === 1 ? "" : "s"}`} />
+
+      <form
+        method="get"
+        className="mb-4 flex flex-wrap items-end gap-3 rounded-lg border border-slate-200 bg-white p-3"
+      >
+        <FilterSelect name="device" label="Device" defaultValue={sp.device} options={filterOptions.devices} />
+        <FilterSelect name="browser" label="Browser" defaultValue={sp.browser} options={filterOptions.browsers} />
+        <FilterSelect name="os" label="OS" defaultValue={sp.os} options={filterOptions.oses} />
+        <FilterSelect name="country" label="Country" defaultValue={sp.country} options={filterOptions.countries} />
+        <div>
+          <label className="mb-1 block text-[11px] font-medium uppercase tracking-wide text-slate-400">From</label>
+          <input
+            type="date"
+            name="from"
+            defaultValue={sp.from}
+            className="rounded-md border border-slate-200 px-2.5 py-1.5 text-sm text-slate-900 outline-none"
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-[11px] font-medium uppercase tracking-wide text-slate-400">To</label>
+          <input
+            type="date"
+            name="to"
+            defaultValue={sp.to}
+            className="rounded-md border border-slate-200 px-2.5 py-1.5 text-sm text-slate-900 outline-none"
+          />
+        </div>
+        <button
+          type="submit"
+          className="rounded-md bg-slate-900 px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-slate-800"
+        >
+          Filter
+        </button>
+        {hasFilters && (
+          <Link
+            href="/admin/sessions"
+            className="rounded-md border border-slate-200 px-4 py-1.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50"
+          >
+            Clear
+          </Link>
+        )}
+      </form>
 
       <Table>
         <Thead>
-          <Th>Time</Th>
           <Th>When</Th>
           <Th>User</Th>
-          <Th>IP</Th>
+          <Th>Browser / OS</Th>
           <Th>Location</Th>
           <Th>Source</Th>
-          <Th>Medium</Th>
-          <Th>Campaign</Th>
-          <Th>Params</Th>
           <Th>Duration</Th>
-          <Th>Bounce</Th>
+          <Th>Scroll</Th>
+          <Th>Mouse</Th>
+          <Th>CTA</Th>
+          <Th>Form</Th>
+          <Th>Status</Th>
           <Th>Replay</Th>
         </Thead>
         <tbody>
           {sessions.map((s) => {
-            const rawParams = formatRawParams(s.rawParams);
+            const status = statusOf(s);
+            const maxScrollDepth = s.scrollEvents[0]?.depth ?? 0;
             return (
               <Tr key={s.id}>
-                <Td title={s.startedAt.toLocaleString()}>{s.startedAt.toLocaleString()}</Td>
                 <Td title={s.startedAt.toLocaleString()}>{formatRelativeTime(s.startedAt)}</Td>
                 <Td className="text-slate-900">
                   {s.visitor.fingerprint.slice(0, 8)}
@@ -79,16 +151,22 @@ export default async function AdminSessionsPage() {
                     · {s.visitor.isReturning ? "Returning" : "New"}
                   </span>
                 </Td>
-                <Td>{s.ipAddress ?? "—"}</Td>
+                <Td>
+                  {s.visitor.browser ?? "—"}
+                  {s.visitor.os && <span className="text-slate-400"> · {s.visitor.os}</span>}
+                </Td>
                 <Td>{[s.visitor.city, s.visitor.country].filter(Boolean).join(", ") || "—"}</Td>
                 <Td>{s.utmSource ?? (s.referrer ? (hostnameOf(s.referrer) ?? s.referrer) : "Direct")}</Td>
-                <Td>{s.utmMedium ?? "—"}</Td>
-                <Td>{s.utmCampaign ?? "—"}</Td>
-                <Td className="text-xs text-slate-400" title={rawParams?.full}>
-                  {rawParams?.preview ?? "—"}
-                </Td>
                 <Td className="tabular-nums">{formatDuration(s.totalDuration)}</Td>
-                <Td>{s.isBounce ? "Yes" : "No"}</Td>
+                <Td className="tabular-nums">{maxScrollDepth ? `${maxScrollDepth}%` : "—"}</Td>
+                <Td className="tabular-nums">{s._count.mouseEvents || "—"}</Td>
+                <Td className="tabular-nums">{s._count.ctaEvents || "—"}</Td>
+                <Td className="tabular-nums">{s._count.formEvents || "—"}</Td>
+                <Td>
+                  <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${status.className}`}>
+                    {status.label}
+                  </span>
+                </Td>
                 <Td>
                   {s._count.replayChunks > 0 ? (
                     <Link
@@ -108,6 +186,51 @@ export default async function AdminSessionsPage() {
         </tbody>
       </Table>
       {sessions.length === 0 && <EmptyState message="No sessions recorded yet." />}
+
+      <Pagination
+        basePath="/admin/sessions"
+        searchParams={{
+          device: sp.device,
+          browser: sp.browser,
+          os: sp.os,
+          country: sp.country,
+          from: sp.from,
+          to: sp.to,
+        }}
+        page={page}
+        totalPages={totalPages}
+        total={total}
+      />
+    </div>
+  );
+}
+
+function FilterSelect({
+  name,
+  label,
+  defaultValue,
+  options,
+}: {
+  name: string;
+  label: string;
+  defaultValue?: string;
+  options: string[];
+}) {
+  return (
+    <div>
+      <label className="mb-1 block text-[11px] font-medium uppercase tracking-wide text-slate-400">{label}</label>
+      <select
+        name={name}
+        defaultValue={defaultValue ?? ""}
+        className="rounded-md border border-slate-200 px-2.5 py-1.5 text-sm text-slate-900 outline-none"
+      >
+        <option value="">All</option>
+        {options.map((o) => (
+          <option key={o} value={o}>
+            {o}
+          </option>
+        ))}
+      </select>
     </div>
   );
 }

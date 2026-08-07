@@ -34,6 +34,11 @@ function describeTarget(el: Element): string {
   return cls ? `${el.tagName.toLowerCase()}.${cls}` : el.tagName.toLowerCase();
 }
 
+function visibleTextOf(el: Element): string | undefined {
+  const text = el.textContent?.trim().replace(/\s+/g, " ");
+  return text ? text.slice(0, 80) : undefined;
+}
+
 function isDeadClick(target: Element): boolean {
   const interactive = target.closest(
     'a[href], button, input, select, textarea, label, [role="button"], [onclick], [data-cta], summary'
@@ -59,7 +64,15 @@ function handleClick(e: MouseEvent) {
   if (!target) return;
 
   const { width, height } = pageDimensions();
-  trackHeatmap(currentPath(), "click", e.pageX / width, e.pageY / height, window.innerWidth);
+  trackHeatmap(
+    currentPath(),
+    "click",
+    e.pageX / width,
+    e.pageY / height,
+    window.innerWidth,
+    describeTarget(target),
+    visibleTextOf(target)
+  );
 
   const now = Date.now();
   if (isRageClick(e.clientX, e.clientY, now)) {
@@ -80,9 +93,18 @@ function handleMouseOver(e: MouseEvent) {
   if (hoverTimer) clearTimeout(hoverTimer);
   const x = e.pageX;
   const y = e.pageY;
+  const target = e.target as Element | null;
   hoverTimer = setTimeout(() => {
     const { width, height } = pageDimensions();
-    trackHeatmap(currentPath(), "hover", x / width, y / height, window.innerWidth);
+    trackHeatmap(
+      currentPath(),
+      "hover",
+      x / width,
+      y / height,
+      window.innerWidth,
+      target ? describeTarget(target) : undefined,
+      target ? visibleTextOf(target) : undefined
+    );
   }, HOVER_DWELL_MS);
 }
 

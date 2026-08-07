@@ -34,6 +34,8 @@ model Visitor {
   deviceType       String?
   screenWidth      Int?
   screenHeight     Int?
+  network          String?
+  downlink         Float?
   sessions         Session[]
   leads            Lead[]
 
@@ -249,9 +251,12 @@ model HeatmapEvent {
   xPct          Float
   yPct          Float
   viewportWidth Int?
+  selector      String?
+  elementText   String?
   createdAt     DateTime @default(now())
 
   @@index([path, type])
+  @@index([path, type, selector])
 }
 
 // ---------------------------------------------------------------------------

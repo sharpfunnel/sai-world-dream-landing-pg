@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { waitUntil } from "@vercel/functions";
 import { prisma } from "@/lib/prisma";
 import { upsertVisitor, findOrCreateSession, type SessionIdentity } from "@/lib/tracking/resolveVisitorSession";
 import { readIpFromHeaders, readMetaCookies } from "@/lib/tracking/geo";
@@ -97,11 +98,16 @@ export async function POST(request: Request) {
       },
     });
 
-    await sendLeadConversionEvent(lead, dbSession, {
-      ip,
-      userAgent: request.headers.get("user-agent"),
-      sourceUrl: request.headers.get("referer"),
-    }).catch((error) => console.error("[/api/leads] CAPI dispatch threw unexpectedly", error));
+    // Fire-and-forget: the visitor's response shouldn't wait on a round-trip to Meta's
+    // Graph API. waitUntil() keeps the serverless invocation alive long enough to finish
+    // the send after the response has already gone out.
+    waitUntil(
+      sendLeadConversionEvent(lead, dbSession, {
+        ip,
+        userAgent: request.headers.get("user-agent"),
+        sourceUrl: request.headers.get("referer"),
+      }).catch((error) => console.error("[/api/leads] CAPI dispatch threw unexpectedly", error))
+    );
 
     return NextResponse.json({ ok: true, leadId: lead.id });
   } catch (error) {

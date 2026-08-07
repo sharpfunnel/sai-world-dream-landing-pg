@@ -3,8 +3,24 @@ import { Users, Activity, UserPlus, TrendingUp, MoveDown, MousePointerClick, Clo
 import { StatTile } from "@/components/admin/StatTile";
 import { ConversionFunnel } from "@/components/admin/ConversionFunnel";
 import { TimeSeriesChart } from "@/components/admin/TimeSeriesChart";
+import { DevicesDonut } from "@/components/admin/DevicesDonut";
+import { BarList } from "@/components/admin/BarList";
+import { CountryList } from "@/components/admin/CountryList";
+import { WorldMap } from "@/components/admin/WorldMap";
+import { DateRangeSelect } from "@/components/admin/DateRangeSelect";
+import { LiveBadge } from "@/components/admin/LiveBadge";
 import { Table, Thead, Th, Tr, Td, EmptyState } from "@/components/admin/Table";
-import { getOverviewStats, getDailyTimeSeries, getTrafficSources, getRecentLeads } from "@/lib/admin/queries";
+import {
+  getOverviewStats,
+  getDailyTimeSeries,
+  getTrafficSources,
+  getRecentLeads,
+  getLiveVisitorCount,
+  getDeviceBreakdown,
+  getBrowserBreakdown,
+  getTopPages,
+  getVisitorsByCountry,
+} from "@/lib/admin/queries";
 
 export const dynamic = "force-dynamic";
 
@@ -15,13 +31,26 @@ function formatDuration(seconds: number): string {
   return m > 0 ? `${m}m ${s}s` : `${s}s`;
 }
 
-export default async function AdminOverviewPage() {
-  const [stats, series, trafficSources, recentLeads] = await Promise.all([
-    getOverviewStats(30),
-    getDailyTimeSeries(30),
-    getTrafficSources(30),
-    getRecentLeads(5),
-  ]);
+export default async function AdminOverviewPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ days?: string }>;
+}) {
+  const params = await searchParams;
+  const days = Number(params.days) || 30;
+
+  const [stats, series, trafficSources, recentLeads, liveCount, devices, browsers, topPages, countries] =
+    await Promise.all([
+      getOverviewStats(days),
+      getDailyTimeSeries(days),
+      getTrafficSources(days),
+      getRecentLeads(5),
+      getLiveVisitorCount(),
+      getDeviceBreakdown(days),
+      getBrowserBreakdown(days),
+      getTopPages(days),
+      getVisitorsByCountry(days),
+    ]);
 
   const funnelStages = [
     { label: "Sessions", count: stats.sessionCount, color: "cyan" as const },
@@ -32,29 +61,61 @@ export default async function AdminOverviewPage() {
 
   return (
     <div>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <LiveBadge initialCount={liveCount} />
+        <DateRangeSelect basePath="/admin" searchParams={{ days: params.days }} days={days} />
+      </div>
+
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
-        <StatTile label="Visitors" value={stats.visitorCount.toLocaleString()} icon={Users} color="blue" />
-        <StatTile label="Sessions" value={stats.sessionCount.toLocaleString()} icon={Activity} color="cyan" />
-        <StatTile label="Leads" value={stats.leadCount.toLocaleString()} icon={UserPlus} color="gold" />
+        <StatTile
+          label="Visitors"
+          value={stats.visitorCount.toLocaleString()}
+          icon={Users}
+          color="blue"
+          delta={stats.deltas.visitorCount}
+        />
+        <StatTile
+          label="Sessions"
+          value={stats.sessionCount.toLocaleString()}
+          icon={Activity}
+          color="cyan"
+          delta={stats.deltas.sessionCount}
+        />
+        <StatTile
+          label="Leads"
+          value={stats.leadCount.toLocaleString()}
+          icon={UserPlus}
+          color="gold"
+          delta={stats.deltas.leadCount}
+        />
         <StatTile
           label="Conversion"
           value={`${stats.conversionRate.toFixed(1)}%`}
           icon={TrendingUp}
           color="emerald"
+          delta={stats.deltas.conversionRate}
         />
         <StatTile
           label="Scrolled 50%+"
           value={stats.scrolledDeepCount.toLocaleString()}
           icon={MoveDown}
           color="purple"
+          delta={stats.deltas.scrolledDeepCount}
         />
         <StatTile
           label="Clicked a CTA"
           value={stats.ctaClickCount.toLocaleString()}
           icon={MousePointerClick}
           color="rose"
+          delta={stats.deltas.ctaClickCount}
         />
-        <StatTile label="Avg. time" value={formatDuration(stats.avgSessionDuration)} icon={Clock} color="teal" />
+        <StatTile
+          label="Avg. time"
+          value={formatDuration(stats.avgSessionDuration)}
+          icon={Clock}
+          color="teal"
+          delta={stats.deltas.avgSessionDuration}
+        />
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -102,6 +163,17 @@ export default async function AdminOverviewPage() {
 
       <div className="mt-6">
         <TimeSeriesChart data={series} />
+      </div>
+
+      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <DevicesDonut title="Devices" items={devices} />
+        <BarList title="Browsers" items={browsers} barColor="bg-cyan-500" />
+        <BarList title="Top pages" items={topPages} barColor="bg-purple-500" />
+      </div>
+
+      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[2fr_1fr]">
+        <WorldMap data={countries} />
+        <CountryList title="Top countries" items={countries} />
       </div>
 
       <div className="mt-6">

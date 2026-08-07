@@ -201,6 +201,8 @@ export async function POST(request: Request) {
             xPct: event.xPct,
             yPct: event.yPct,
             viewportWidth: Math.round(event.viewportWidth),
+            selector: event.selector,
+            elementText: event.elementText,
             createdAt: new Date(event.timestamp),
           })),
         }),
