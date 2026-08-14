@@ -48,7 +48,7 @@ export interface PerformanceEventPayload {
 
 export interface ErrorEventPayload {
   type: "error";
-  errorType: "js" | "unhandled_rejection" | "image_load";
+  errorType: "js" | "unhandled_rejection" | "image_load" | "lead_submit";
   message: string;
   stack?: string;
   path?: string;

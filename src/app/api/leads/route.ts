@@ -70,17 +70,24 @@ export async function POST(request: Request) {
 
     // The session may already exist from an earlier /api/track beacon fired before the
     // pixel had written its cookies. Backfill fbc/fbp here — by form-submit time they're
-    // almost always set, and this is the strongest match signal CAPI can send.
+    // almost always set, and this is the strongest match signal CAPI can send. This is a
+    // best-effort enrichment, not essential to recording the lead — a failure here must
+    // not stop the lead from being saved, so it's isolated in its own try/catch.
     const needsBackfill = (metaCookies.fbc && !initialDbSession.fbc) || (metaCookies.fbp && !initialDbSession.fbp);
-    const dbSession = needsBackfill
-      ? await prisma.session.update({
+    let dbSession = initialDbSession;
+    if (needsBackfill) {
+      try {
+        dbSession = await prisma.session.update({
           where: { id: initialDbSession.id },
           data: {
             fbc: initialDbSession.fbc ?? metaCookies.fbc ?? undefined,
             fbp: initialDbSession.fbp ?? metaCookies.fbp ?? undefined,
           },
-        })
-      : initialDbSession;
+        });
+      } catch (error) {
+        console.error("[/api/leads] fbc/fbp backfill failed, continuing with existing session", error);
+      }
+    }
 
     const lead = await prisma.lead.create({
       data: {

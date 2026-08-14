@@ -222,9 +222,17 @@ export async function submitLead(formId: string, fields: LeadFields): Promise<{ 
       body: JSON.stringify(payload),
       keepalive: true,
     });
-    if (res.ok) trackPixelLead(leadId);
+    if (res.ok) {
+      trackPixelLead(leadId);
+    } else {
+      console.error("[submitLead] non-OK response", res.status);
+      trackError("lead_submit", `Lead submit failed: HTTP ${res.status}`, undefined, window.location.pathname);
+    }
     return { ok: res.ok, leadId };
-  } catch {
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("[submitLead] request failed", error);
+    trackError("lead_submit", `Lead submit request failed: ${message}`, error instanceof Error ? error.stack : undefined, window.location.pathname);
     return { ok: false, leadId };
   }
 }
