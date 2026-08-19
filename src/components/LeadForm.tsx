@@ -161,7 +161,7 @@ export default function LeadForm({
         required
         pattern="(?=(?:\D*\d){10}\D*$)[0-9\s\-()]+"
         title="Enter a valid 10-digit mobile number"
-        maxLength={14}
+        maxLength={17}
         inputMode="tel"
         placeholder="Mobile Number*"
         value={values.phone}
