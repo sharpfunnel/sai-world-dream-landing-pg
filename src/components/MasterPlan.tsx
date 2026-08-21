@@ -27,6 +27,7 @@ export default function MasterPlan() {
         src={unsplashUrl(STOCK_IMAGES.skylineDusk, { w: 1600 })}
         alt=""
         className="absolute inset-0 h-full w-full object-cover opacity-20"
+        loading="lazy"
       />
       <div className="absolute inset-0 bg-navy-950/85" />
 
